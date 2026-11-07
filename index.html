@@ -223,6 +223,10 @@
   }
   .tl-item .tl-main{flex:1;min-width:0}
   .tl-item .tl-t{font-size:13.5px;font-weight:500}
+  .tl-item .tl-q{
+    font-size:11px;color:var(--ink3);font-weight:400;margin-left:6px;
+    background:#F2F4F8;border-radius:4px;padding:1px 5px;font-variant-numeric:tabular-nums;
+  }
   .tl-item .tl-note{font-size:11.5px;color:var(--ink3);margin-top:2px;line-height:1.45;
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   .tl-item .tl-time{font-size:11.5px;color:var(--ink3);font-variant-numeric:tabular-nums;flex:0 0 auto}
@@ -267,7 +271,16 @@
     font-size:12.5px;white-space:nowrap;
   }
   .sub-pick button.on{background:var(--accent);color:#fff;font-weight:600}
+  .sub-pick button i{font-style:normal;font-size:10.5px;opacity:.55;margin-left:4px;font-weight:400}
+  .sub-pick button.on i{opacity:.8}
+  .name-hint{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .name-hint button{
+    font-size:12px;padding:5px 9px;border-radius:8px;
+    background:var(--accent-soft);color:#2A4CB8;
+  }
+  .name-hint button:active{background:#DCE4FF}
   .basis{font-size:11.5px;color:var(--ink3);margin-top:6px;line-height:1.5;min-height:17px}
+  .hint-line{font-size:11.5px;color:var(--ink3);margin-top:5px;line-height:1.4}
   .quick{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
   .quick button{
     font-size:12px;padding:5px 10px;border-radius:8px;background:#F2F4F8;color:var(--ink2);
@@ -358,6 +371,7 @@
   <div class="field">
     <label>知识点名称<i>*</i></label>
     <input id="inName" placeholder="如：增长率计算" maxlength="40" autocomplete="off">
+    <div class="name-hint" id="nameHint" style="display:none"></div>
   </div>
   <div class="field">
     <label>错误原因</label>
@@ -379,6 +393,8 @@
   </div>
 </div>
 
+<input type="file" id="importFile" accept=".json,application/json" style="display:none">
+
 <div class="toast" id="toast">
   <span class="tk">✓</span><span id="toastTxt"></span>
   <button class="ta" id="toastAct" style="display:none">撤销</button>
@@ -398,6 +414,11 @@
   <h2 id="noteTitle">第 1 次错误</h2>
   <p class="hint" id="noteSub">记录时间 —</p>
   <div class="field">
+    <label>题库题号（选填）</label>
+    <input id="qidInput" placeholder="如：10204478，留空也可以" maxlength="20" inputmode="numeric" autocomplete="off">
+    <div class="hint-line">填了以后可以拿这串号去藏题里翻到原题</div>
+  </div>
+  <div class="field">
     <label>备注（这道题错在哪）</label>
     <textarea id="noteInput" rows="3" maxlength="120" placeholder="如：2023 联考 A 卷第 12 题，选项里「不」字看漏了"></textarea>
   </div>
@@ -407,76 +428,73 @@
   </div>
 </div>
 
+<script id="catalog-data" type="application/json">{"version":1,"source":"错题复盘/app/dist/data","total":18011,"modules":[{"key":"yy","short":"言","label":"言语理解","total":6762,"topics":[{"key":"pdyy","label":"片段阅读","total":2963,"subs":[{"key":"中心理解","label":"中心理解","total":1600,"details":[{"name":"关联词-对策","count":396},{"name":"主题词","count":362},{"name":"关联词-转折","count":285},{"name":"关联词-因果","count":171},{"name":"特殊问法","count":128},{"name":"关联词-并列","count":120},{"name":"分述句特征-多角度论述","count":83},{"name":"分述句特征-举例子","count":43}]},{"key":"细节判断","label":"细节判断","total":918,"details":[]},{"key":"标题填入","label":"标题填入","total":253,"details":[]},{"key":"词句理解","label":"词句理解","total":170,"details":[]},{"key":"其他","label":"其他","total":22,"merged":12,"details":[{"name":"态度理解","count":5},{"name":"语言风格","count":3},{"name":"修辞手法","count":2},{"name":"加强论证","count":2},{"name":"态度观点","count":2},{"name":"行文结构","count":2},{"name":"公文类型判断","count":1},{"name":"前提假设","count":1},{"name":"层次划分","count":1},{"name":"语体风格","count":1},{"name":"说明方法","count":1},{"name":"道理启示","count":1}]}]},{"key":"ltk","label":"逻辑填空","total":2690,"subs":[{"key":"实词填空","label":"实词填空","total":990,"details":[]},{"key":"混搭填空","label":"混搭填空","total":879,"details":[]},{"key":"成语填空","label":"成语填空","total":744,"details":[]},{"key":"语境分析","label":"语境分析","total":51,"details":[{"name":"关联关系-转折关系","count":24},{"name":"关联关系-并列关系","count":15},{"name":"对应关系-前后呼应","count":8},{"name":"关联关系-因果关系","count":3},{"name":"对应关系-解释说明","count":1}]},{"key":"词的辨析","label":"词的辨析","total":26,"details":[]}]},{"key":"yybd","label":"语句表达","total":1109,"subs":[{"key":"语句填空","label":"语句填空","total":386,"details":[]},{"key":"语句排序","label":"语句排序","total":355,"details":[]},{"key":"下文推断","label":"下文推断","total":186,"details":[]},{"key":"病句辨析","label":"病句辨析","total":110,"details":[]},{"key":"语句衔接","label":"语句衔接","total":32,"details":[]},{"key":"成语运用","label":"成语运用","total":13,"details":[]},{"key":"其他","label":"其他","total":27,"merged":19,"details":[{"name":"修辞辨析","count":6},{"name":"句式结构辨析","count":2},{"name":"字形辨析","count":2},{"name":"诗文引用","count":2},{"name":"上文推断","count":1},{"name":"俗语运用","count":1},{"name":"修辞手法辨析","count":1},{"name":"公文格式规范","count":1},{"name":"公文语序","count":1},{"name":"句子归位","count":1},{"name":"复句关系辨析","count":1},{"name":"成语使用","count":1},{"name":"标点作用","count":1},{"name":"段落关系","count":1},{"name":"虚词用法辨析","count":1},{"name":"表述得体","count":1},{"name":"词语运用","count":1},{"name":"语句翻译","count":1},{"name":"语气辨析","count":1}]}]}]},{"key":"zl","short":"资","label":"资料分析","total":3521,"topics":[{"key":"zz","label":"增长","total":1198,"subs":[{"key":"一般增长率比较","label":"一般增长率比较","total":275,"details":[]},{"key":"一般增长率计算","label":"一般增长率计算","total":186,"details":[]},{"key":"增长量计算","label":"增长量计算","total":181,"details":[]},{"key":"增长量比较","label":"增长量比较","total":136,"details":[]},{"key":"基期量计算","label":"基期量计算","total":133,"details":[]},{"key":"基期和差","label":"基期和差","total":52,"details":[]},{"key":"年均增长量","label":"年均增长量","total":44,"details":[]},{"key":"现期量计算","label":"现期量计算","total":44,"details":[]},{"key":"混合增长率","label":"混合增长率","total":41,"details":[]},{"key":"间隔增长","label":"间隔增长","total":40,"details":[]},{"key":"年均增长率","label":"年均增长率","total":39,"details":[]},{"key":"基期量比较","label":"基期量比较","total":27,"details":[]}]},{"key":"bz","label":"比重","total":787,"subs":[{"key":"现期比重","label":"现期比重","total":471,"details":[]},{"key":"基期比重","label":"基期比重","total":104,"details":[]},{"key":"统计图选择","label":"统计图选择","total":83,"details":[]},{"key":"两期比重差","label":"两期比重差","total":73,"details":[]},{"key":"两期比重比较","label":"两期比重比较","total":48,"details":[]},{"key":"其他","label":"其他","total":8,"merged":1,"details":[{"name":"混合比重","count":8}]}]},{"key":"zhfx","label":"综合分析","total":612,"subs":[{"key":"选是型","label":"选是型","total":434,"details":[]},{"key":"选非型","label":"选非型","total":178,"details":[]}]},{"key":"jdjs","label":"简单计算","total":395,"subs":[{"key":"简单加减计算","label":"简单加减计算","total":193,"details":[]},{"key":"排序比较","label":"排序比较","total":178,"details":[]},{"key":"直接找数","label":"直接找数","total":23,"details":[]},{"key":"其他","label":"其他","total":1,"merged":1,"details":[{"name":"容斥计算","count":1}]}]},{"key":"pjs","label":"平均数","total":284,"subs":[{"key":"现期平均数","label":"现期平均数","total":189,"details":[]},{"key":"平均数增长率","label":"平均数增长率","total":36,"details":[]},{"key":"基期平均数","label":"基期平均数","total":30,"details":[]},{"key":"平均数增长量","label":"平均数增长量","total":23,"details":[]},{"key":"其他","label":"其他","total":6,"merged":2,"details":[{"name":"两期平均数比较","count":3},{"name":"现期平均数比较","count":3}]}]},{"key":"bs","label":"倍数","total":245,"subs":[{"key":"现期倍数","label":"现期倍数","total":165,"details":[]},{"key":"基期倍数","label":"基期倍数","total":38,"details":[]},{"key":"现期倍数比较","label":"现期倍数比较","total":29,"details":[]},{"key":"现期追赶","label":"现期追赶","total":13,"details":[]}]}]},{"key":"pd","short":"判","label":"判断推理","total":7728,"topics":[{"key":"ljpd","label":"逻辑判断","total":2482,"subs":[{"key":"加强削弱","label":"加强削弱","total":1019,"details":[{"name":"削弱型","count":409},{"name":"加强型","count":369},{"name":"力度比较","count":180},{"name":"因果论证","count":10},{"name":"措施论证","count":10},{"name":"对比实验","count":7},{"name":"反例削弱","count":5},{"name":"补充论据","count":5}]},{"key":"分析推理","label":"分析推理","total":405,"details":[{"name":"排列组合","count":192},{"name":"匹配对应","count":172},{"name":"真假分析","count":23},{"name":"事件排序","count":10},{"name":"对应匹配","count":4},{"name":"组合选取","count":2},{"name":"集合推理","count":2}]},{"key":"翻译推理","label":"翻译推理","total":314,"details":[{"name":"逆否规则","count":92},{"name":"递推关系","count":80},{"name":"联言选言","count":71},{"name":"假言命题","count":44},{"name":"集合关系","count":9},{"name":"递推规则","count":5},{"name":"充分必要","count":3},{"name":"联言命题","count":3}]},{"key":"前提假设","label":"前提假设","total":210,"details":[{"name":"搭桥","count":143},{"name":"补充前提","count":38},{"name":"排除他因","count":12},{"name":"搭桥假设","count":7},{"name":"补桥前提","count":7},{"name":"必要条件","count":2},{"name":"语用预设","count":1}]},{"key":"评价型","label":"评价型","total":143,"details":[{"name":"论证结构","count":92},{"name":"逻辑错误","count":51}]},{"key":"结论推出","label":"结论推出","total":140,"details":[{"name":"日常结论","count":126},{"name":"归纳结论","count":14}]},{"key":"真假推理","label":"真假推理","total":128,"details":[{"name":"矛盾关系","count":56},{"name":"假设法","count":29},{"name":"反对关系","count":18},{"name":"真假分析","count":15},{"name":"真假话判断","count":8},{"name":"半真半假","count":2}]},{"key":"原因解释","label":"原因解释","total":81,"details":[{"name":"解释矛盾","count":56},{"name":"解释现象","count":13},{"name":"矛盾解释","count":8},{"name":"现象解释","count":2},{"name":"矛盾现象","count":2}]},{"key":"前提型","label":"前提型","total":12,"details":[{"name":"搭桥","count":7},{"name":"补充前提","count":4},{"name":"排除他因","count":1}]},{"key":"结论型","label":"结论型","total":11,"details":[{"name":"日常结论","count":9},{"name":"归纳推论","count":2}]},{"key":"其他","label":"其他","total":19,"merged":4,"details":[{"name":"结论推断","count":6},{"name":"结构比较","count":5},{"name":"解释论证","count":5},{"name":"评价论证","count":3}]}]},{"key":"txxx","label":"图形推理","total":1873,"subs":[{"key":"数量规律","label":"数量规律","total":553,"details":[{"name":"面","count":124},{"name":"素","count":119},{"name":"笔画数","count":94},{"name":"线","count":79},{"name":"点","count":74},{"name":"角","count":19},{"name":"面积","count":19},{"name":"数字运算","count":17}]},{"key":"立体图形","label":"立体图形","total":381,"details":[{"name":"空间折叠","count":233},{"name":"立体拼合","count":58},{"name":"三视图","count":46},{"name":"截面图","count":41},{"name":"六面体","count":2},{"name":"六面体折叠","count":1}]},{"key":"样式规律","label":"样式规律","total":334,"details":[{"name":"平面拼合","count":122},{"name":"去同存异","count":66},{"name":"规律叠加","count":59},{"name":"遍历","count":51},{"name":"直接叠加","count":25},{"name":"去异存同","count":10},{"name":"叠加运算","count":1}]},{"key":"位置规律","label":"位置规律","total":324,"details":[{"name":"相对位置","count":103},{"name":"平移","count":100},{"name":"旋转","count":85},{"name":"翻转","count":36}]},{"key":"属性规律","label":"属性规律","total":279,"details":[{"name":"对称性","count":151},{"name":"连接方式","count":60},{"name":"曲直性","count":33},{"name":"开闭性","count":14},{"name":"实际意义","count":7},{"name":"起笔笔形","count":3},{"name":"形状对应","count":2},{"name":"相对大小","count":2}]},{"key":"其他","label":"其他","total":2,"merged":1,"details":[{"name":"图形关系","count":2}]}]},{"key":"lbtl","label":"类比推理","total":1640,"subs":[{"key":"对应关系","label":"对应关系","total":756,"details":[{"name":"功能对应","count":176},{"name":"因果对应","count":92},{"name":"目的对应","count":81},{"name":"场所对应","count":71},{"name":"材料对应","count":62},{"name":"时间顺承","count":60},{"name":"人物对应","count":52},{"name":"属性对应","count":41}]},{"key":"逻辑关系","label":"逻辑关系","total":516,"details":[{"name":"包含关系","count":256},{"name":"并列关系","count":115},{"name":"交叉关系","count":73},{"name":"全同关系","count":24},{"name":"包含","count":20},{"name":"条件关系","count":17},{"name":"交叉","count":4},{"name":"并列","count":4}]},{"key":"语义关系","label":"语义关系","total":259,"details":[{"name":"近义关系","count":92},{"name":"反义关系","count":69},{"name":"比喻象征","count":52},{"name":"词语释义","count":31},{"name":"近义","count":4},{"name":"比喻象征义","count":3},{"name":"反义","count":2},{"name":"构词关系","count":2}]},{"key":"语法关系","label":"语法关系","total":84,"details":[{"name":"动宾关系","count":29},{"name":"偏正关系","count":24},{"name":"主谓关系","count":11},{"name":"词性对应","count":11},{"name":"主谓宾关系","count":2},{"name":"偏正","count":2},{"name":"结构对应","count":2},{"name":"主谓","count":1}]},{"key":"范围关系","label":"范围关系","total":25,"details":[{"name":"并列关系","count":10},{"name":"种属关系","count":9},{"name":"交叉关系","count":3},{"name":"组成关系","count":3}]}]},{"key":"dypd","label":"定义判断","total":1602,"subs":[{"key":"单定义","label":"单定义","total":1262,"details":[{"name":"经济管理类","count":336},{"name":"心理行为类","count":219},{"name":"社会文化类","count":198},{"name":"科技自然类","count":147},{"name":"原理效应类","count":105},{"name":"法律类","count":100},{"name":"逻辑类","count":66},{"name":"经济管理","count":25}]},{"key":"多定义","label":"多定义","total":340,"details":[{"name":"平行定义","count":211},{"name":"总分定义","count":129}]}]},{"key":"kxlt","label":"科学推理","total":131,"subs":[{"key":"物理","label":"物理","total":81,"details":[{"name":"力学","count":48},{"name":"电学","count":15},{"name":"光学","count":10},{"name":"热学","count":5},{"name":"原子物理","count":2},{"name":"声学","count":1}]},{"key":"化学","label":"化学","total":27,"details":[{"name":"物质性质","count":11},{"name":"化学反应","count":10},{"name":"溶液","count":6}]},{"key":"物理推理","label":"物理推理","total":14,"details":[{"name":"力学","count":8},{"name":"光学","count":2},{"name":"热学","count":2},{"name":"电学","count":2}]},{"key":"其他","label":"其他","total":9,"merged":5,"details":[{"name":"化学推理","count":3},{"name":"地理","count":2},{"name":"生物","count":2},{"name":"物理力学","count":1},{"name":"物理热学","count":1}]}]}]}]}</script>
 <script>
+const $ = id => document.getElementById(id);
+
 /* =========================================================
-   层级：模块 →（子模块 →）子类 → 知识点 → 错误记录
+   层级：模块 → 题型 → 子类 → 知识点 → 错误记录
    point : {id, mod, g, s, name, reason, count, created}
-   record: {id, pid, ts}
+           g = 题型 key（pdyy/ltk/txxx…），s = 子类名
+           g 为空表示「未归类」（早期数据或题库变动）
+   record: {id, pid, ts, n:备注, q:题号}
    ========================================================= */
-const KEY = 'gk_cuoti_v2';
+const KEY = 'gk_cuoti_v3';
+const LEGACY_KEYS = ['gk_cuoti_v2', 'gk_cuoti_v1'];
 
 const MODULES = [
   { key:'zzll', name:'政治理论', short:'政', sub:'时政热点 · 理论 · 党建', color:'#C0392B', bg:'#FBEDEC' },
   { key:'cs',   name:'常识',     short:'常', sub:'法律 · 历史 · 科技 · 地理', color:'#B4791C', bg:'#FBF3E2' },
-  { key:'yy',   name:'言语理解', short:'言', sub:'逻辑填空 · 片段阅读 · 排序', color:'#1F7A6B', bg:'#E6F4F0' },
-  { key:'pd',   name:'判断推理', short:'判', sub:'图形 · 定义 · 类比 · 逻辑', color:'#4C4FBF', bg:'#ECECFB' },
-  { key:'zl',   name:'资料分析', short:'资', sub:'ABRX · 速算 · 比重 · 平均数', color:'#2B6CB0', bg:'#E8F0FA' }
+  { key:'yy',   name:'言语理解', short:'言', sub:'', color:'#1F7A6B', bg:'#E6F4F0' },
+  { key:'pd',   name:'判断推理', short:'判', sub:'', color:'#4C4FBF', bg:'#ECECFB' },
+  { key:'zl',   name:'资料分析', short:'资', sub:'', color:'#2B6CB0', bg:'#E8F0FA' }
 ];
 
-/* 子模块 / 子类目录：维度说明 + 每个子类的判定依据 */
-const SUBS = {
-  yy: [
-    { key:'ltk', label:'逻辑填空', dim:'按「先看语境、再辨词语」的解题顺序细分', cats:[
-      { key:'yjdy', label:'语境对应', basis:'解释、反对、并列、递进四类逻辑关系的呼应点没找准' },
-      { key:'scby', label:'实词辨析', basis:'词义侧重、搭配范围、语体色彩三项辨析不清' },
-      { key:'cyby', label:'成语辨析', basis:'望文生义、褒贬误用、对象误用、语义轻重' },
-      { key:'glc',  label:'关联词与虚词', basis:'转折、因果、条件、递进等关联词搭配错位' },
-      { key:'dkzh', label:'多空综合', basis:'多空题未按「先易后难、逐空排除」处理' }
-    ]},
-    { key:'pdyy', label:'片段阅读', dim:'按「设问方式」细分，设问决定找什么、找多细', cats:[
-      { key:'zxll', label:'中心理解', basis:'主旨概括、意图判断，未抓中心句与主题词' },
-      { key:'xpjd', label:'细节判断', basis:'偷换概念、无中生有、以偏概全、时态错误' },
-      { key:'btlr', label:'标题填入', basis:'新闻、说明、议论三类文体对标题的凝练要求不同' },
-      { key:'yybd', label:'语句表达', basis:'语句排序、语句填空、下文推断，抓首尾句与话题一致' },
-      { key:'pwyd', label:'篇章阅读', basis:'多段材料综合，未先看题再回文定位' }
-    ]}
-  ],
-  pd: [
-    { key:'txxx', label:'图形推理', dim:'按「规律类型」细分，同时就是考场上的观察顺序', cats:[
-      { key:'wzgl', label:'位置规律', basis:'平移、旋转、翻转，元素组成完全相同时优先看' },
-      { key:'ysgl', label:'样式规律', basis:'遍历、加减同异、黑白叠加，元素组成相似时看' },
-      { key:'slgl', label:'数量规律', basis:'点、线、面、角、素，元素组成凌乱时数' },
-      { key:'sxgl', label:'属性规律', basis:'对称性、曲直性、开闭性，图形规整时看' },
-      { key:'ltfg', label:'立体与分组', basis:'空间重构、截面图、三视图、分组分类' }
-    ]},
-    { key:'dypd', label:'定义判断', dim:'按「定义数量 + 设问方向」细分', cats:[
-      { key:'ddyd', label:'单定义判断', basis:'只给一个定义，抓主体、客体、条件、方式、结果五要素' },
-      { key:'ddby', label:'多定义辨析', basis:'多个定义并列，先对号入座再区分相近定义' },
-      { key:'fwsw', label:'反向设问', basis:'「不属于」「不符合」类，须逐项验证后再排除' }
-    ]},
-    { key:'lbtl', label:'类比推理', dim:'按「关系层级」细分：先语义、再逻辑、最后语法', cats:[
-      { key:'yygx', label:'语义关系', basis:'近义、反义、比喻象征，先看词义是否相关' },
-      { key:'ljgx', label:'逻辑关系', basis:'全同、包含、交叉、并列、对应（因果、条件、目的）' },
-      { key:'yfgx', label:'语法关系', basis:'主谓、动宾、偏正、并列，词性结构是否一致' },
-      { key:'ejby', label:'二级辨析', basis:'一级关系排除不掉时，用词性、感情色彩、范围大小二次筛选' }
-    ]},
-    { key:'ljtl', label:'逻辑推理', dim:'按「题型与论证结构」细分', cats:[
-      { key:'fytl', label:'翻译推理', basis:'假言命题、递推、逆否等价，先翻译成箭头再推' },
-      { key:'zjtl', label:'真假推理', basis:'矛盾关系、反对关系，找不到矛盾就用代入排除' },
-      { key:'jqxr', label:'加强削弱', basis:'先定论点论据，再看是搭桥拆桥还是补否论据' },
-      { key:'rqjl', label:'日常结论', basis:'归纳推理与原因解释，选项不能过度推断' },
-      { key:'jspj', label:'解释评价', basis:'解释矛盾现象、评价论证方法与逻辑漏洞' }
-    ]}
-  ]
+/* 分类目录由 tools/gen_catalog.py 从题库 source 路径生成，不要手改 */
+const CATALOG = JSON.parse($('catalog-data').textContent);
+const catModule = k => CATALOG.modules.find(m => m.key === k) || null;
+const topicsOf = k => { const m = catModule(k); return m ? m.topics : []; };
+const topicOf = (k, t) => topicsOf(k).find(x => x.key === t) || null;
+const subOf = (k, t, s) => { const tp = topicOf(k, t); return tp ? (tp.subs.find(x => x.key === s) || null) : null; };
+const hasTopics = k => topicsOf(k).length > 0;
+
+/* v2 的子类（英文 key）→ 题库分类（题型 key + 子类名），用于旧数据迁移 */
+const LEGACY_SUB_MAP = {
+  'yy|ltk|yjdy':  ['ltk','语境分析'],
+  'yy|ltk|scby':  ['ltk','实词填空'],
+  'yy|ltk|cyby':  ['ltk','成语填空'],
+  'yy|ltk|glc':   ['ltk','语境分析'],
+  'yy|ltk|dkzh':  ['ltk','混搭填空'],
+  'yy|pdyy|zxll': ['pdyy','中心理解'],
+  'yy|pdyy|xpjd': ['pdyy','细节判断'],
+  'yy|pdyy|btlr': ['pdyy','标题填入'],
+  'yy|pdyy|yybd': ['yybd','其他'],
+  'yy|pdyy|pwyda':['pdyy','其他'],
+  'yy|pdyy|pwyd': ['pdyy','其他'],
+  'pd|txxx|wzgl': ['txxx','位置规律'],
+  'pd|txxx|ysgl': ['txxx','样式规律'],
+  'pd|txxx|slgl': ['txxx','数量规律'],
+  'pd|txxx|sxgl': ['txxx','属性规律'],
+  'pd|txxx|ltfg': ['txxx','立体图形'],
+  'pd|dypd|ddyd': ['dypd','单定义'],
+  'pd|dypd|ddby': ['dypd','多定义'],
+  'pd|dypd|fwsw': ['dypd','其他'],
+  'pd|lbtl|yygx': ['lbtl','语义关系'],
+  'pd|lbtl|ljgx': ['lbtl','逻辑关系'],
+  'pd|lbtl|yfgx': ['lbtl','语法关系'],
+  'pd|lbtl|ejby': ['lbtl','其他'],
+  'pd|ljtl|fytl': ['ljpd','翻译推理'],
+  'pd|ljtl|zjtl': ['ljpd','真假推理'],
+  'pd|ljtl|jqxr': ['ljpd','加强削弱'],
+  'pd|ljtl|rqjl': ['ljpd','结论推出'],
+  'pd|ljtl|jspj': ['ljpd','评价型']
 };
 
 const QUICK_REASONS = ['公式混淆','计算失误','审题不清','概念混淆','时间不够','选项陷阱','知识点遗忘','方法用错'];
 
 const modOf = k => MODULES.find(m => m.key === k) || MODULES[0];
-const subsOf = k => SUBS[k] || [];
-const groupOf = (mod, g) => subsOf(mod).find(x => x.key === g) || null;
-const catOf = (mod, g, s) => { const gs = groupOf(mod, g); return gs ? (gs.cats.find(c => c.key === s) || null) : null; };
-const $ = id => document.getElementById(id);
+const groupOf = (mod, g) => topicOf(mod, g);
+const catOf = (mod, g, s) => subOf(mod, g, s);
 
 let db = loadDB();
 let route = { name:'home' };
@@ -487,23 +505,40 @@ let draftGroup = null;     // 弹窗当前所属子模块（无子模块时为 n
 
 function loadDB(){
   try{
-    const raw = JSON.parse(localStorage.getItem(KEY) || localStorage.getItem('gk_cuoti_v1'));
-    if (raw && Array.isArray(raw.points)) {
-      // 兼容旧版数据：没有 g / s 的知识点视为挂在模块下
-      const points = raw.points.map(p => ({
-        ...p,
-        g: p.g || '',
-        s: p.s || ''
-      }));
-      return {
-        points,
-        records: Array.isArray(raw.records)
-          ? raw.records.map(r => ({ ...r, n: r.n || '' }))
-          : []
-      };
+    const own = localStorage.getItem(KEY);
+    if (own){
+      return normalize(JSON.parse(own), false);
+    }
+    // 从旧版本迁移：v2 的英文子类 key 换成题库分类
+    for (const oldKey of LEGACY_KEYS){
+      const old = localStorage.getItem(oldKey);
+      if (!old) continue;
+      const migrated = normalize(JSON.parse(old), true);
+      localStorage.setItem(KEY, JSON.stringify(migrated));
+      console.info('已从 ' + oldKey + ' 迁移 ' + migrated.points.length + ' 个知识点');
+      return migrated;
     }
   }catch(e){ console.warn('读取本地数据失败', e); }
   return { points: [], records: [] };
+}
+
+/** 统一字段：迁移旧分类、校验分类是否还在题库里、给记录补备注与题号 */
+function normalize(raw, migrate){
+  const points = (raw && Array.isArray(raw.points) ? raw.points : []).map(p => {
+    let g = p.g || '';
+    let s = p.s || '';
+    if (migrate && g){
+      const hit = LEGACY_SUB_MAP[p.mod + '|' + g + '|' + s];
+      if (hit){ g = hit[0]; s = hit[1]; }
+    }
+    // 题库里查不到这个题型/子类（题库更新或旧 key），归为未归类，不丢数据
+    if (g && !subOf(p.mod, g, s)){ g = ''; s = ''; }
+    if (!g) s = '';
+    return { ...p, g, s };
+  });
+  const records = (raw && Array.isArray(raw.records) ? raw.records : [])
+    .map(r => ({ ...r, n: r.n || '', q: r.q || '' }));
+  return { points, records };
 }
 function saveDB(){ try{ localStorage.setItem(KEY, JSON.stringify(db)); }catch(e){ alert('本地存储写入失败'); } }
 
@@ -568,16 +603,16 @@ function renderHome(view){
     </div>
     <div class="sec-t"><span>选择模块</span><span>共 5 个模块</span></div>
     ${MODULES.map(m => {
-      const gs = subsOf(m.key);
+      const tp = topicsOf(m.key);
+      const cm = catModule(m.key);
       const ps = pointsOf(m.key), c = errTotalOf(m.key);
-      const right = gs.length
-        ? `<div class="m-cnt"><b>${gs.length}</b> 个子模块</div>`
-        : `<div class="m-cnt"><b>${ps.length}</b> 个知识点</div>`;
+      const right = `<div class="m-cnt"><b>${ps.length}</b> 个知识点</div>`;
+      const subLine = cm ? `题库 ${cm.total} 题 · ${tp.length} 个题型` : m.sub;
       return `<div class="mod" data-act="open" data-key="${m.key}">
         <div class="glyph" style="background:${m.bg};color:${m.color}">${m.short}</div>
         <div>
           <div class="m-name">${m.name}</div>
-          <div class="m-sub">${m.sub}</div>
+          <div class="m-sub">${subLine}</div>
         </div>
         <div class="m-right">${right}<div class="m-err">累计 ${c} 次错误</div></div>
         <svg class="chev" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
@@ -588,20 +623,22 @@ function renderHome(view){
 
 /* --------- 子模块列表 --------- */
 function renderGroups(view, modKey){
-  const m = modOf(modKey), gs = subsOf(modKey);
-  $('title').innerHTML = `${m.name}<span class="sub">${gs.length} 个子模块 · ${pointsOf(modKey).length} 个知识点</span>`;
+  const m = modOf(modKey), tp = topicsOf(modKey), cm = catModule(modKey);
+  if (!cm){ route = { name:'module', mod: modKey }; return render(); }  // 无题库的模块走普通清单
+  const loose = pointsOf(modKey).filter(p => !p.g);
+  $('title').innerHTML = `${m.name}<span class="sub">${tp.length} 个题型 · ${cm.total} 题</span>`;
   $('backBtn').style.display = 'flex';
   $('addbar').style.display = 'none';
 
   view.innerHTML = `
-    <div class="sec-t"><span>选择子模块</span><span>共 ${gs.length} 个 · 按题型划分</span></div>
-    ${gs.map(g => {
+    <div class="sec-t"><span>选择题型</span><span>题库共 ${cm.total} 题</span></div>
+    ${tp.map(g => {
       const c = errTotalOfGroup(modKey, g.key), n = pointsOfGroup(modKey, g.key).length;
       return `<div class="mod" data-act="open-group" data-mod="${modKey}" data-g="${g.key}">
         <div class="glyph" style="background:${m.bg};color:${m.color}">${g.label.slice(0,1)}</div>
         <div>
           <div class="m-name">${g.label}</div>
-          <div class="m-sub">${g.cats.length} 个子类</div>
+          <div class="m-sub">${g.subs.length} 个子类 · ${g.total} 题</div>
         </div>
         <div class="m-right">
           <div class="m-cnt"><b>${n}</b> 个知识点</div>
@@ -610,64 +647,92 @@ function renderGroups(view, modKey){
         <svg class="chev" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
       </div>`;
     }).join('')}
+    ${loose.length ? `<div class="mod" data-act="open-group" data-mod="${modKey}" data-g="__none__">
+      <div class="glyph" style="background:#EDEFF4;color:#8E95A3">未</div>
+      <div>
+        <div class="m-name">未归类</div>
+        <div class="m-sub">早期数据或题库里找不到的分类</div>
+      </div>
+      <div class="m-right">
+        <div class="m-cnt"><b>${loose.length}</b> 个知识点</div>
+        <div class="m-err">点进去可重新归类</div>
+      </div>
+      <svg class="chev" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+    </div>` : ''}
   `;
 }
 
 /* --------- 子模块内：按子类分组的清单 --------- */
 function renderGroup(view, modKey, gKey){
-  const m = modOf(modKey), g = groupOf(modKey, gKey);
-  if (!g){ route = { name:'groups', mod: modKey }; return render(); }
+  const m = modOf(modKey);
 
-  const all = pointsOfGroup(modKey, gKey);
-  $('title').innerHTML = `${g.label}<span class="sub">${g.cats.length} 个子类 · ${all.length} 个知识点</span>`;
-  $('backBtn').style.display = 'flex';
-  $('addbar').style.display = 'block';
-
-  if (!all.length){
-    view.innerHTML = `
-      <div class="dim"><b>细分维度</b><span>${g.dim}</span></div>
-      <div class="chips">${chipHtml('', '全部', 0, subFilter === '')}${g.cats.map(c => chipHtml(c.key, c.label, 0, subFilter === c.key)).join('')}</div>
-      <div class="empty" style="padding:34px 20px">
-        <div class="e-ic">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 016.5 3H19v18H6.5A2.5 2.5 0 004 23V5.5z"/><path d="M8 8h7M8 12h5"/></svg>
-        </div>
-        <h3>${g.label}还没有知识点</h3>
-        <p>新增时选好子类，清单会自动按子类分组。</p>
-        <button class="btn-ghost" data-act="add">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-          新增第一个知识点
-        </button>
-      </div>`;
+  /* ---------- 未归类 ---------- */
+  if (gKey === '__none__'){
+    const loose = pointsOf(modKey).filter(p => !p.g);
+    $('title').innerHTML = '未归类<span class="sub">' + m.name + '</span>';
+    $('backBtn').style.display = 'flex';
+    $('addbar').style.display = 'flex';
+    view.innerHTML = loose.length
+      ? '<div class="dim"><b>说明</b><span>这些知识点没有对应到题库分类，点开详情可重新选择题型与子类。</span></div>'
+        + loose.map(p => pointHtml(p)).join('')
+      : '<div class="empty" style="padding:40px 20px"><h3>没有未归类知识点</h3></div>';
     return;
   }
 
-  const used = g.cats.filter(c => all.some(p => p.s === c.key));
-  const uncat = all.filter(p => !g.cats.some(c => c.key === p.s));
-  const shown = subFilter ? used.filter(c => c.key === subFilter) : used;
+  const g = groupOf(modKey, gKey);
+  if (!g){ route = { name:'groups', mod: modKey }; return render(); }
+
+  const all = pointsOfGroup(modKey, gKey);
+  $('title').innerHTML = g.label + '<span class="sub">' + g.subs.length + ' 个子类 · ' + all.length + ' 个知识点</span>';
+  $('backBtn').style.display = 'flex';
+  $('addbar').style.display = 'flex';
+
+  const dimBar = '<div class="dim"><b>子类题量</b><span>' + g.label + ' 共 ' + g.total
+    + ' 题，按题库真实题量排序；题量大的子类更值得先补</span></div>';
+
+  if (!all.length){
+    view.innerHTML = dimBar
+      + '<div class="chips">' + chipHtml('', '全部', 0, subFilter === '')
+      + g.subs.map(s => chipHtml(s.key, s.label, 0, subFilter === s.key)).join('') + '</div>'
+      + '<div class="empty" style="padding:34px 20px">'
+      + '<div class="e-ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 016.5 3H19v18H6.5A2.5 2.5 0 004 23V5.5z"/><path d="M8 8h7M8 12h5"/></svg></div>'
+      + '<h3>' + g.label + '还没有知识点</h3>'
+      + '<p>新增时选好子类，清单会自动按子类分组。</p>'
+      + '<button class="btn-ghost" data-act="add"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>新增第一个知识点</button>'
+      + '</div>';
+    return;
+  }
+
+  const used = g.subs.filter(s => all.some(p => p.s === s.key));
+  const uncat = all.filter(p => !g.subs.some(s => s.key === p.s));
+  const shown = subFilter ? used.filter(s => s.key === subFilter) : used;
   const showUncat = !subFilter && uncat.length > 0;
 
   let body = '';
-  shown.forEach(c => {
-    const ps = all.filter(p => p.s === c.key);
-    body += `<div class="grp"><div class="g-t"><span>${c.label}</span><span>${ps.length} 个</span></div><div class="g-b">${c.basis}</div></div>`;
+  shown.forEach(s => {
+    const ps = all.filter(p => p.s === s.key);
+    const hint = (s.details && s.details.length)
+      ? s.details.slice(0, 4).map(d => d.name + ' ' + d.count).join(' · ')
+      : (s.merged ? '含 ' + s.merged + ' 个小类' : '');
+    body += '<div class="grp"><div class="g-t"><span>' + s.label + '</span><span>' + s.total + ' 题 · ' + ps.length + ' 个知识点</span></div>'
+      + (hint ? '<div class="g-b">' + hint + '</div>' : '') + '</div>';
     body += ps.map(p => pointHtml(p)).join('');
   });
   if (showUncat){
-    body += `<div class="grp"><div class="g-t"><span>未分类</span><span>${uncat.length} 个</span></div><div class="g-b">早期录入或编辑后未指定子类，点进详情可重新归类</div></div>`;
+    body += '<div class="grp"><div class="g-t"><span>未分类</span><span>' + uncat.length + ' 个</span></div>'
+      + '<div class="g-b">子类已不在题库中，点进详情可重新归类</div></div>';
     body += uncat.map(p => pointHtml(p)).join('');
   }
   if (!shown.length && !showUncat){
-    body = `<div class="empty" style="padding:34px 20px"><h3>这个子类下还没有知识点</h3><p style="margin:0">点右下角新增，会自动归到当前选中的子类</p></div>`;
+    body = '<div class="empty" style="padding:34px 20px"><h3>这个子类下还没有知识点</h3><p style="margin:0">点下方新增，会自动归到当前选中的子类</p></div>';
   }
 
-  view.innerHTML = `
-    <div class="dim"><b>细分维度</b><span>${g.dim}</span></div>
-    <div class="chips">
-      ${chipHtml('', '全部', all.length, subFilter === '')}
-      ${g.cats.map(c => chipHtml(c.key, c.label, all.filter(p => p.s === c.key).length, subFilter === c.key)).join('')}
-    </div>
-    ${body}
-  `;
+  view.innerHTML = dimBar
+    + '<div class="chips">'
+    + chipHtml('', '全部', all.length, subFilter === '')
+    + g.subs.map(s => chipHtml(s.key, s.label, all.filter(p => p.s === s.key).length, subFilter === s.key)).join('')
+    + '</div>'
+    + body;
 }
 
 function chipHtml(key, label, n, on){
@@ -765,7 +830,7 @@ function renderDetail(view, id){
         <div class="dot">${n}</div>
         <div class="tl-b">
           <div class="tl-main">
-            <div class="tl-t">第 ${n} 次错误</div>
+            <div class="tl-t">第 ${n} 次错误${r.q ? `<span class="tl-q">#${esc(r.q)}</span>` : ''}</div>
             ${r.n ? `<div class="tl-note">${esc(r.n)}</div>` : ''}
           </div>
           <span class="tl-time">${fmt(r.ts)}</span>
@@ -792,7 +857,7 @@ document.addEventListener('click', e => {
 
   if (act === 'open'){
     const k = el.dataset.key;
-    route = subsOf(k).length ? { name:'groups', mod:k } : { name:'module', mod:k };
+    route = topicsOf(k).length ? { name:'groups', mod:k } : { name:'module', mod:k };
     subFilter = ''; render();
   }
   else if (act === 'open-group'){ route = { name:'group', mod: el.dataset.mod, g: el.dataset.g }; subFilter = ''; render(); }
@@ -804,6 +869,8 @@ document.addEventListener('click', e => {
   else if (act === 'check-here'){ checkIn(null, Number(el.dataset.id)); }
   else if (act === 'del-point'){ askDelete(Number(el.dataset.id)); }
   else if (act === 'rec-menu'){ openRecMenu(Number(el.dataset.id)); }
+  else if (act === 'export'){ exportBackup(); }
+  else if (act === 'import'){ $('importFile').click(); }
 });
 
 $('backBtn').onclick = () => {
@@ -869,7 +936,7 @@ function updateCard(p){
   if (route.name === 'group' && route.mod && route.g){
     const g = groupOf(route.mod, route.g);
     const n = pointsOfGroup(route.mod, route.g).length;
-    $('title').innerHTML = `${g.label}<span class="sub">${g.cats.length} 个子类 · ${n} 个知识点</span>`;
+    $('title').innerHTML = `${g.label}<span class="sub">${g.subs.length} 个子类 · ${n} 个知识点</span>`;
   } else {
     const key = p.mod;
     $('title').innerHTML = `${modOf(key).name}<span class="sub">${pointsOf(key).length} 个知识点 · 累计 ${errTotalOf(key)} 次</span>`;
@@ -896,23 +963,47 @@ function openSheet(id){
   $('quick').innerHTML = QUICK_REASONS.map(r => `<button data-q="${r}">${r}</button>`).join('');
 
   // 子类选择
-  const subField = $('subField'), pick = $('subPick');
+  const subField = $('subField');
   draftGroup = g;
   if (g){
-    draftSub = (p && p.s) || (id ? '' : (subFilter || g.cats[0].key));
-    if (!g.cats.some(c => c.key === draftSub)) draftSub = g.cats[0].key;
+    draftSub = (p && p.s) || (id ? '' : (subFilter || g.subs[0].key));
+    if (!g.subs.some(s => s.key === draftSub)) draftSub = g.subs[0].key;
     subField.style.display = '';
-    pick.innerHTML = g.cats.map(c => `<button data-s="${c.key}" class="${draftSub===c.key?'on':''}">${c.label}</button>`).join('');
-    $('subBasis').textContent = '判定依据：' + (g.cats.find(c => c.key === draftSub)?.basis || '');
+    renderSubPick(g, draftSub);
   } else {
     draftSub = '';
     subField.style.display = 'none';
+    $('nameHint').style.display = 'none';
   }
 
   $('sheetSave').disabled = !$('inName').value.trim();
   showSheet(true);
   setTimeout(() => $('inName').focus(), 260);
 }
+/* 子类选择：带真实题量，并给出该子类的常见细分作为名称推荐 */
+function renderSubPick(g, cur){
+  $('subPick').innerHTML = g.subs.map(s =>
+    `<button data-s="${s.key}" class="${cur === s.key ? 'on' : ''}">${s.label}<i>${s.total}</i></button>`
+  ).join('');
+
+  const sub = g.subs.find(s => s.key === cur);
+  const details = (sub && sub.details) ? sub.details : [];
+  const hint = details.length
+    ? '常见细分：' + details.slice(0, 5).map(d => d.name).join('、')
+    : (sub && sub.merged ? `含 ${sub.merged} 个小类，共 ${sub.total} 题` : '');
+  $('subBasis').textContent = sub ? `${sub.total} 题 · ${hint}` : '';
+
+  const rec = $('nameHint');
+  if (details.length){
+    rec.style.display = '';
+    rec.innerHTML = details.slice(0, 5)
+      .map(d => `<button data-name="${d.name}">${d.name}</button>`).join('');
+  } else {
+    rec.style.display = 'none';
+    rec.innerHTML = '';
+  }
+}
+
 function showSheet(on){
   ['actSheet','noteSheet'].forEach(id => $(id).classList.remove('show'));
   $('mask').classList.toggle('show', on);
@@ -958,8 +1049,9 @@ function openNote(recId){
   const rs = recordsOf(r.pid);
   const order = rs.length - rs.findIndex(x => x.id === r.id);
   $('noteTitle').textContent = `第 ${order} 次错误`;
-  $('noteSub').textContent = `记录时间 ${fmt(r.ts)} · 可补写这道题错在哪`;
+  $('noteSub').textContent = `记录时间 ${fmt(r.ts)}`;
   $('noteInput').value = r.n || '';
+  $('qidInput').value = r.q || '';
   $('actSheet').classList.remove('show');
   $('mask').classList.add('show');
   $('noteSheet').classList.add('show');
@@ -970,11 +1062,12 @@ $('noteSave').onclick = () => {
   const r = db.records.find(x => x.id === noteRecId);
   if (!r) return;
   r.n = $('noteInput').value.trim();
+  r.q = $('qidInput').value.trim();
   saveDB();
   $('noteSheet').classList.remove('show');
   $('mask').classList.remove('show');
   if (route.name === 'detail') renderDetail($('view'), r.pid);
-  toast(r.n ? '备注已保存' : '已清空备注');
+  toast(r.n || r.q ? '记录已保存' : '已清空记录内容');
 };
 
 function askDeleteRecord(recId){
@@ -1004,8 +1097,15 @@ $('subPick').addEventListener('click', e => {
   const b = e.target.closest('[data-s]'); if (!b) return;
   draftSub = b.dataset.s;
   [...e.currentTarget.querySelectorAll('button')].forEach(x => x.classList.toggle('on', x.dataset.s === draftSub));
-  const cat = draftGroup && draftGroup.cats.find(c => c.key === draftSub);
-  $('subBasis').textContent = cat ? '判定依据：' + cat.basis : '';
+  if (draftGroup) renderSubPick(draftGroup, draftSub);
+});
+
+/* 点推荐名称直接填入 */
+$('nameHint').addEventListener('click', e => {
+  const b = e.target.closest('[data-name]');
+  if (!b) return;
+  $('inName').value = b.dataset.name;
+  $('sheetSave').disabled = false;
 });
 
 $('inName').addEventListener('input', () => { $('sheetSave').disabled = !$('inName').value.trim(); });
@@ -1116,16 +1216,96 @@ $('toastAct').onclick = () => {
 $('infoBtn').onclick = () => {
   openDialog({
     title: '使用说明',
-    text: '① 主界面固定五个模块；<b>言语理解、判断推理</b>下面还有一层子模块。<br>' +
-          '② 子模块按题型划分，子类按解法差异划分，分组标题上写着该子类的判定依据。<br>' +
-          '③ 新增时先选子类，填名称与错误原因，清单会自动按子类分组。<br>' +
-          '④ 清单左侧圆圈<b>勾选一次＝记一次错</b>，累计次数 +1，并生成一条带时间的记录。<br>' +
-          '⑤ 政治理论、常识、资料分析考点线性，不设子模块，直接在模块下记知识点。<br><br>' +
-          '数据保存在本机浏览器，关闭后不会丢失。',
+    text: '① 五个模块固定；<b>言语理解、判断推理、资料分析</b>的题型与子类取自你的题库，共 14 个题型、78 个子类、18,011 题。<br>' +
+          '② 子类后面跟着的是该子类的真实题量，题量大的更值得先补。<br>' +
+          '③ 新增时先选子类，名称可以从「常见细分」里点选。<br>' +
+          '④ 清单左侧圆圈<b>勾选一次＝记一次错</b>，误触可在提示条里撤销。<br>' +
+          '⑤ 详情页每条记录可填<b>题库题号</b>，方便回藏题翻原题。<br><br>' +
+          '数据存在本机浏览器，换设备请用下方导出/导入。<br><br>' +
+          '<button data-act="export" style="width:48%;height:40px;border-radius:10px;background:#F2F4F8;color:#5B6170;font-size:13.5px">导出备份</button>' +
+          '<button data-act="import" style="width:48%;height:40px;border-radius:10px;background:#EDF1FF;color:#2B5CE6;font-size:13.5px;margin-left:4%">导入备份</button>',
     okText: '知道了',
     showCancel: false,
     onOk: hideDialog
   });
+};
+
+/* ---------- 备份：导出 / 导入 ---------- */
+function exportBackup(){
+  const payload = {
+    app: 'gongkao-cuotiben',
+    version: 3,
+    exportedAt: new Date().toISOString(),
+    points: db.points,
+    records: db.records
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const d = new Date();
+  const stamp = '' + d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'cuotiben-backup-' + stamp + '.json';
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('已导出 ' + db.points.length + ' 个知识点');
+}
+
+/* 合并导入：同名同分类视为同一个知识点，次数取大、记录按时间去重 */
+function mergeBackup(incoming){
+  let added = 0, merged = 0, recAdded = 0;
+  const keyOf = p => [p.mod || '', p.g || '', p.s || '', (p.name || '').trim()].join('|');
+  const index = new Map(db.points.map(p => [keyOf(p), p]));
+
+  incoming.points.forEach(src => {
+    let target = index.get(keyOf(src));
+    if (target){
+      target.count = Math.max(target.count || 0, src.count || 0);
+      if (src.reason) target.reason = src.reason;
+      target.created = Math.min(target.created || Date.now(), src.created || Date.now());
+      merged++;
+    } else {
+      target = { ...src, id: nextId(db.points) };
+      db.points.push(target);
+      index.set(keyOf(src), target);
+      added++;
+    }
+    const seen = new Set(db.records.filter(r => r.pid === target.id).map(r => r.ts));
+    incoming.records.filter(r => r.pid === src.id).forEach(r => {
+      if (seen.has(r.ts)) return;
+      db.records.push({ id: nextId(db.records), pid: target.id, ts: r.ts, n: r.n || '', q: r.q || '' });
+      seen.add(r.ts);
+      recAdded++;
+    });
+  });
+
+  // 兜底：次数不得小于记录条数
+  db.points.forEach(p => {
+    const cnt = db.records.filter(r => r.pid === p.id).length;
+    if (cnt > p.count) p.count = cnt;
+  });
+  return { added, merged, recAdded };
+}
+
+$('importFile').onchange = e => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const raw = JSON.parse(reader.result);
+      if (!raw || !Array.isArray(raw.points)) throw new Error('这不是错题本的备份文件');
+      const fromFile = normalize(raw, true);
+      const r = mergeBackup(fromFile);
+      saveDB();
+      render();
+      hideDialog();
+      toast(`导入完成：新增 ${r.added} 个 · 合并 ${r.merged} 个 · 记录 +${r.recAdded}`);
+    }catch(err){
+      toast('导入失败：' + err.message);
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
 };
 
 /* 启动 */
