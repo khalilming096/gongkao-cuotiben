@@ -44,5 +44,7 @@ data class ErrorRecord(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
     val pointId: Long,
     val timestamp: Long = System.currentTimeMillis(),
-    val note: String = ""
+    val note: String = "",
+    /** 题库题号，关联到「错题复盘」里的原题，可为空 */
+    val qid: String = ""
 )

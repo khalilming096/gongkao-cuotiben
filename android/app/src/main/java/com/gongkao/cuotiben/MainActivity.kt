@@ -47,7 +47,7 @@ import com.gongkao.cuotiben.data.ErrorRecord
 import com.gongkao.cuotiben.data.KnowledgePoint
 import com.gongkao.cuotiben.model.Catalog
 import com.gongkao.cuotiben.model.StudyModule
-import com.gongkao.cuotiben.model.SubGroup
+import com.gongkao.cuotiben.model.Topic
 import com.gongkao.cuotiben.ui.CuotiViewModel
 import com.gongkao.cuotiben.ui.DeletePointDialog
 import com.gongkao.cuotiben.ui.DeleteRecordDialog
@@ -55,6 +55,7 @@ import com.gongkao.cuotiben.ui.DetailScreen
 import com.gongkao.cuotiben.ui.GroupScreen
 import com.gongkao.cuotiben.ui.HomeScreen
 import com.gongkao.cuotiben.ui.InfoDialog
+import com.gongkao.cuotiben.ui.LooseScreen
 import com.gongkao.cuotiben.ui.ModuleScreen
 import com.gongkao.cuotiben.ui.PointEditorDialog
 import com.gongkao.cuotiben.ui.RecordNoteDialog
@@ -82,15 +83,18 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private const val LOOSE = "__none__"
+
 @Composable
 fun CuotiApp(vm: CuotiViewModel = viewModel()) {
     val points by vm.points.collectAsStateWithLifecycle()
     val records by vm.records.collectAsStateWithLifecycle()
 
-    // 路由：moduleKey 为空即在主界面；groupKey 为空即在模块层或知识点清单
+    // 路由：moduleKey 为空即主界面；groupKey 为空/topic key/LOOSE
     var moduleKey by rememberSaveable { mutableStateOf("") }
     var groupKey by rememberSaveable { mutableStateOf("") }
     var detailId by rememberSaveable { mutableStateOf(-1L) }
+    var subFilter by rememberSaveable { mutableStateOf("") }
 
     var editorOpen by remember { mutableStateOf(false) }
     var editorTarget by remember { mutableStateOf<KnowledgePoint?>(null) }
@@ -106,27 +110,32 @@ fun CuotiApp(vm: CuotiViewModel = viewModel()) {
     val scope = rememberCoroutineScope()
 
     val routeModule: StudyModule? = StudyModule.byKey(moduleKey)
-    val groups: List<SubGroup> = routeModule?.let { Catalog.groupsOf(it) } ?: emptyList()
-    val routeGroup: SubGroup? = groups.firstOrNull { it.key == groupKey }
+    val groups: List<Topic> = routeModule?.let { Catalog.topicsOf(it.key) } ?: emptyList()
+    val routeTopic: Topic? = groups.firstOrNull { it.key == groupKey }
     val currentPoint: KnowledgePoint? = points.firstOrNull { it.id == detailId }
 
-    // 界面文案与层级状态在渲染前一次算好
-    val onGroupList = routeModule != null && groups.isNotEmpty() && routeGroup == null
+    val onTopicList = routeModule != null && groups.isNotEmpty() && groupKey.isEmpty()
+    val onLoose = groupKey == LOOSE
+
     val barTitle = when {
         detailId > 0 -> "错误记录"
-        routeGroup != null -> routeGroup.label
+        onLoose -> "未归类"
+        routeTopic != null -> routeTopic.label
         routeModule != null -> routeModule.label
         else -> "公考错题本"
     }
     val barSubtitle = when {
         detailId > 0 && currentPoint != null && routeModule != null ->
             Catalog.breadcrumb(routeModule, currentPoint.groupKey, currentPoint.subKey)
-        routeGroup != null -> {
-            val n = points.count { it.moduleKey == moduleKey && it.groupKey == groupKey }
-            "${routeGroup.categories.size} 个子类 · $n 个知识点"
+        onLoose -> routeModule?.label
+        routeTopic != null -> {
+            val n = points.count { it.moduleKey == moduleKey && it.groupKey == routeTopic.key }
+            "${routeTopic.subs.size} 个子类 · $n 个知识点"
         }
-        onGroupList ->
-            "${groups.size} 个子模块 · ${points.count { it.moduleKey == moduleKey }} 个知识点"
+        onTopicList -> {
+            val total = routeModule?.let { Catalog.module(it.key)?.total } ?: 0
+            "${groups.size} 个题型 · 共 $total 题"
+        }
         routeModule != null -> moduleSubtitle(points, records, routeModule)
         else -> null
     }
@@ -135,7 +144,7 @@ fun CuotiApp(vm: CuotiViewModel = viewModel()) {
     fun goBack() {
         when {
             detailId > 0 -> detailId = -1L
-            routeGroup != null -> groupKey = ""
+            groupKey.isNotEmpty() -> groupKey = ""
             else -> moduleKey = ""
         }
     }
@@ -149,7 +158,6 @@ fun CuotiApp(vm: CuotiViewModel = viewModel()) {
         }
     }
 
-    // 勾选一次即记录，同时给出「撤销」，误触可一键回退
     val onCheck: (KnowledgePoint) -> Unit = { point ->
         vm.recordError(point)
         val nth = point.errorCount + 1
@@ -162,15 +170,12 @@ fun CuotiApp(vm: CuotiViewModel = viewModel()) {
             )
             if (result == SnackbarResult.ActionPerformed) {
                 vm.undoLatestRecord(point.id)
-                snackbarHostState.showSnackbar(
-                    message = "已撤销这次记录",
-                    duration = SnackbarDuration.Short
-                )
+                snackbarHostState.showSnackbar("已撤销这次记录", duration = SnackbarDuration.Short)
             }
         }
     }
 
-    val showAddBar = routeModule != null && detailId <= 0 && !onGroupList
+    val showAddBar = routeModule != null && detailId <= 0 && !onTopicList
 
     Box(modifier = Modifier.fillMaxSize()) {
         androidx.compose.foundation.layout.Column(modifier = Modifier.fillMaxSize()) {
@@ -208,35 +213,53 @@ fun CuotiApp(vm: CuotiViewModel = viewModel()) {
                     )
                 }
 
-                routeGroup != null && routeModule != null -> {
-                    val group = routeGroup
-                    val groupPoints = points.filter {
-                        it.moduleKey == moduleKey && it.groupKey == group.key
+                onLoose && routeModule != null -> {
+                    val loosePoints = points.filter { it.moduleKey == moduleKey && it.groupKey.isEmpty() }
+                    LooseScreen(
+                        points = loosePoints,
+                        records = records,
+                        onCheck = onCheck,
+                        onOpen = { point -> detailId = point.id }
+                    )
+                }
+
+                routeTopic != null -> {
+                    val topic = routeTopic
+                    val topicPoints = points.filter {
+                        it.moduleKey == moduleKey && it.groupKey == topic.key
                     }
                     SubModuleScreen(
-                        group = group,
-                        points = groupPoints,
+                        topic = topic,
+                        points = topicPoints,
                         records = records,
+                        filter = subFilter,
+                        onFilterChange = { subFilter = it },
                         onCheck = onCheck,
                         onOpen = { point -> detailId = point.id },
                         onAdd = {
                             editorTarget = null
                             editorModuleKey = moduleKey
-                            editorGroupKey = group.key
-                            editorSubKey = ""
+                            editorGroupKey = topic.key
+                            editorSubKey = subFilter
                             editorOpen = true
                         }
                     )
                 }
 
-                onGroupList && routeModule != null -> {
+                onTopicList && routeModule != null -> {
                     GroupScreen(
                         module = routeModule,
-                        groups = groups,
+                        topics = groups,
                         points = points,
                         records = records,
-                        onOpenGroup = { group ->
-                            groupKey = group.key
+                        onOpenTopic = { topic ->
+                            groupKey = topic.key
+                            subFilter = ""
+                            detailId = -1L
+                        },
+                        onOpenLoose = {
+                            groupKey = LOOSE
+                            subFilter = ""
                             detailId = -1L
                         }
                     )
@@ -267,13 +290,13 @@ fun CuotiApp(vm: CuotiViewModel = viewModel()) {
                     onOpenModule = { module ->
                         moduleKey = module.key
                         groupKey = ""
+                        subFilter = ""
                         detailId = -1L
                     }
                 )
             }
         }
 
-        // 底部固定操作条：全宽、居中、常驻可见，比右下角悬浮按钮更好点也更好找
         if (showAddBar && routeModule != null) {
             val barModule = routeModule
             Surface(
@@ -293,8 +316,8 @@ fun CuotiApp(vm: CuotiViewModel = viewModel()) {
                         .clickable {
                             editorTarget = null
                             editorModuleKey = barModule.key
-                            editorGroupKey = routeGroup?.key.orEmpty()
-                            editorSubKey = ""
+                            editorGroupKey = if (routeTopic != null) routeTopic.key else ""
+                            editorSubKey = subFilter
                             editorOpen = true
                         },
                     horizontalArrangement = Arrangement.Center,
@@ -327,9 +350,10 @@ fun CuotiApp(vm: CuotiViewModel = viewModel()) {
     }
 
     if (editorOpen) {
+        val editorModule = StudyModule.of(editorModuleKey)
         PointEditorDialog(
-            moduleLabel = StudyModule.of(editorModuleKey).label,
-            group = Catalog.groupOf(StudyModule.of(editorModuleKey), editorGroupKey),
+            module = editorModule,
+            topic = Catalog.topicOf(editorModuleKey, editorGroupKey),
             initialSubKey = editorSubKey,
             existing = editorTarget,
             onDismiss = { editorOpen = false },
@@ -341,8 +365,8 @@ fun CuotiApp(vm: CuotiViewModel = viewModel()) {
                 } else {
                     vm.addPoint(editorModuleKey, editorGroupKey, subKey, name, reason) { newId ->
                         scope.launch {
-                            val where = Catalog.groupOf(StudyModule.of(editorModuleKey), editorGroupKey)
-                            val label = where?.label ?: StudyModule.of(editorModuleKey).label
+                            val where = Catalog.topicOf(editorModuleKey, editorGroupKey)
+                            val label = where?.label ?: editorModule.label
                             val result = snackbarHostState.showSnackbar(
                                 message = "已添加到「$label」",
                                 actionLabel = "撤销",
@@ -379,11 +403,12 @@ fun CuotiApp(vm: CuotiViewModel = viewModel()) {
             order = noting.second,
             timeText = TimeText.format(noting.first.timestamp),
             existingNote = noting.first.note,
+            existingQid = noting.first.qid,
             onDismiss = { noteTarget = null },
-            onConfirm = { note ->
-                vm.updateRecordNote(noting.first, note)
+            onConfirm = { note, qid ->
+                vm.updateRecordContent(noting.first, note, qid)
                 noteTarget = null
-                notify(if (note.isBlank()) "已清空备注" else "备注已保存")
+                notify(if (note.isBlank() && qid.isBlank()) "已清空记录内容" else "记录已保存")
             }
         )
     }
