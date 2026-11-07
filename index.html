@@ -95,14 +95,13 @@
 
   /* ---------- 子类筛选 ---------- */
   .chips{
-    display:flex; gap:7px; overflow-x:auto; padding:2px 0 10px; margin:0 -16px; padding-left:16px; padding-right:16px;
-    scrollbar-width:none;
+    display:flex; flex-wrap:wrap; gap:6px;
+    padding:2px 0 10px;
   }
-  .chips::-webkit-scrollbar{display:none}
   .chip{
-    flex:0 0 auto; display:flex; align-items:baseline; gap:5px;
-    padding:7px 11px; border-radius:9px; background:#fff; color:var(--ink2);
-    font-size:13px; white-space:nowrap; box-shadow:0 1px 2px rgba(20,24,35,.04);
+    flex:0 0 auto; display:flex; align-items:baseline; gap:4px;
+    padding:6px 10px; border-radius:8px; background:#fff; color:var(--ink2);
+    font-size:12.5px; white-space:nowrap; box-shadow:0 1px 2px rgba(20,24,35,.04);
   }
   .chip .c-n{font-size:11.5px;color:#AEB4C0;font-variant-numeric:tabular-nums}
   .chip.on{background:var(--accent);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(43,92,230,.28)}
@@ -736,7 +735,8 @@ function renderGroup(view, modKey, gKey){
 }
 
 function chipHtml(key, label, n, on){
-  return `<button class="chip ${on ? 'on' : ''}" data-act="filter" data-key="${key}">${label}<span class="c-n">${n}</span></button>`;
+  const badge = n > 0 ? `<span class="c-n">${n}</span>` : '';
+  return `<button class="chip ${on ? 'on' : ''}" data-act="filter" data-key="${key}">${label}${badge}</button>`;
 }
 
 function pointHtml(p){
