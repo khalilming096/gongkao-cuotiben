@@ -49,6 +49,42 @@ detail_counts = collections.defaultdict(collections.Counter)
 total = 0
 skipped = 0
 
+# 题型专属错因：每个题型的典型失分动作，前端会再拼上通用错因
+TOPIC_ERRORS = {
+    "pdyy": ["没抓中心句", "以偏概全", "偷换概念", "答非所问", "无中生有"],
+    "ltk":  ["呼应点找错", "词义侧重混", "搭配对象错", "褒贬误用", "望文生义"],
+    "yybd": ["首尾句判错", "话题不统一", "关联词错位", "语序判错"],
+    "txxx": ["规律没看出", "数量数错", "元素组成判错", "空间想不出"],
+    "dypd": ["要素漏抓", "主体范围错", "设问看反"],
+    "lbtl": ["一级关系判错", "二级辨析漏", "词性不一致"],
+    "ljpd": ["论点论据找错", "削弱加强弄反", "翻译规则记错", "力度比较错"],
+    "kxlt": ["公式记错", "单位换算错", "概念混淆"],
+    "zz":   ["公式混淆", "时间定位错", "截位位数错", "增长量与率混"],
+    "bz":   ["部分整体找错", "基期现期搞混", "两期方向判错"],
+    "pjs":  ["分子分母找错", "增长率与量混"],
+    "bs":   ["倍数与多几倍混", "基期现期找错"],
+    "jdjs": ["加减错位", "排序看漏", "单位不统一"],
+    "zhfx": ["选项顺序乱", "漏看「不正确」", "中途放弃"],
+}
+
+# 输入框提示语，按题型给例子
+TOPIC_HINTS = {
+    "pdyy": "只看了首句，没发现转折后的句子才是重点",
+    "ltk":  "只按词义选，没看搭配对象",
+    "yybd": "排序没先定首句，凭语感排",
+    "txxx": "只数了直线，漏了曲线",
+    "dypd": "漏看「主体必须是企业」这一条",
+    "lbtl": "只看到近义，没比词性",
+    "ljpd": "把加强项当成了削弱项",
+    "kxlt": "公式记混，用了动能公式",
+    "zz":   "把增长率当成增长量算",
+    "bz":   "分母取了基期量",
+    "pjs":  "把平均数增长率当成普通增长率",
+    "bs":   "「是几倍」和「多几倍」搞混",
+    "jdjs": "位数没对齐算错",
+    "zhfx": "没注意题目问的是「不正确的是」",
+}
+
 for path in glob.glob(os.path.join(BANK_DIR, "bank-*.json")):
     with io.open(path, encoding="utf-8") as f:
         data = json.load(f)
@@ -128,7 +164,14 @@ for module, m in modules.items():
                 "merged": len(rest),
                 "details": [{"name": s["label"], "count": s["total"]} for s in sorted(rest, key=lambda x: -x["total"])],
             })
-        topics.append({"key": t["key"], "label": t["label"], "total": t["total"], "subs": kept})
+        topics.append({
+            "key": t["key"],
+            "label": t["label"],
+            "total": t["total"],
+            "errors": TOPIC_ERRORS.get(t["key"], []),
+            "hint": TOPIC_HINTS.get(t["key"], ""),
+            "subs": kept,
+        })
     out["modules"].append({"key": m["key"], "short": m["short"], "label": m["label"],
                            "total": m["total"], "topics": topics})
 
