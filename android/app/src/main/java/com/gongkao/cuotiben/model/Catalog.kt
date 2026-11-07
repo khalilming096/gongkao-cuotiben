@@ -1,137 +1,202 @@
 package com.gongkao.cuotiben.model
 
-/**
- * 子类：子模块内部的最小分类单元。
- *
- * @param key 唯一标识，存进知识点表的 subKey 字段
- * @param label 展示名，2–4 字名词短语，与模块名风格一致
- * @param basis 该子类的判定依据，用于新增时提示「这条错题该归到哪」
- */
+import android.content.Context
+import org.json.JSONArray
+import org.json.JSONObject
+
+/** 子类：对应题库里的一层分类 */
 data class SubCategory(
     val key: String,
     val label: String,
-    val basis: String
-)
+    val total: Int,
+    val details: List<Detail>,
+    val merged: Int
+) {
+    data class Detail(val name: String, val count: Int)
+}
 
-/**
- * 子模块：模块下的第二层，只在言语理解、判断推理两个模块存在。
- *
- * @param dimension 细分维度，即这一层按什么把题目切开
- */
-data class SubGroup(
+/** 题型：题库里的中间层，带题型专属错因 */
+data class Topic(
     val key: String,
     val label: String,
-    val dimension: String,
-    val categories: List<SubCategory>
+    val total: Int,
+    val errors: List<String>,
+    val hint: String,
+    val subs: List<SubCategory>
+)
+
+data class CatalogModule(
+    val key: String,
+    val label: String,
+    val short: String,
+    val total: Int,
+    val topics: List<Topic>
 )
 
 /**
- * 分类目录。
- *
- * 设计原则：
- * 1. 子模块按「题型」切分，与行测真题的题号顺序一致，考场上想到哪个题型就能直接找到；
- * 2. 子类按「解法差异」切分，同一子模块下的子类必须对应不同的解题动作，
- *    避免出现「知道归到哪但解法一样」的无效分类；
- * 3. 政治理论、常识、资料分析三个模块考点线性、题量集中，不设子模块，直接挂知识点。
+ * 分类目录：从 assets/catalog.json 读取，与网页版共用同一份数据。
+ * 由 tools/gen_catalog.py 扫描题库 source 路径生成，不在代码里手写。
  */
 object Catalog {
 
-    // ---------------- 言语理解 ----------------
+    private var loaded: Map<String, CatalogModule> = emptyMap()
 
-    val verbal: List<SubGroup> = listOf(
-        SubGroup(
-            key = "ltk",
-            label = "逻辑填空",
-            dimension = "按「先看语境、再辨词语」的解题顺序细分",
-            categories = listOf(
-                SubCategory("yjdy", "语境对应", "解释、反对、并列、递进四类逻辑关系的呼应点没找准"),
-                SubCategory("scby", "实词辨析", "词义侧重、搭配范围、语体色彩三项辨析不清"),
-                SubCategory("cyby", "成语辨析", "望文生义、褒贬误用、对象误用、语义轻重"),
-                SubCategory("glc", "关联词与虚词", "转折、因果、条件、递进等关联词搭配错位"),
-                SubCategory("dkzh", "多空综合", "多空题未按「先易后难、逐空排除」处理")
-            )
-        ),
-        SubGroup(
-            key = "pdyy",
-            label = "片段阅读",
-            dimension = "按「设问方式」细分，设问决定找什么、找多细",
-            categories = listOf(
-                SubCategory("zxll", "中心理解", "主旨概括、意图判断，未抓中心句与主题词"),
-                SubCategory("xpjd", "细节判断", "偷换概念、无中生有、以偏概全、时态错误"),
-                SubCategory("btlr", "标题填入", "新闻、说明、议论三类文体对标题的凝练要求不同"),
-                SubCategory("yybd", "语句表达", "语句排序、语句填空、下文推断，抓首尾句与话题一致"),
-                SubCategory("pwyda", "篇章阅读", "多段材料综合，未先看题再回文定位")
-            )
-        )
-    )
-
-    // ---------------- 判断推理 ----------------
-
-    val judgement: List<SubGroup> = listOf(
-        SubGroup(
-            key = "txxx",
-            label = "图形推理",
-            dimension = "按「规律类型」细分，同时就是考场上的观察顺序",
-            categories = listOf(
-                SubCategory("wzgl", "位置规律", "平移、旋转、翻转，元素组成完全相同时优先看"),
-                SubCategory("ysgl", "样式规律", "遍历、加减同异、黑白叠加，元素组成相似时看"),
-                SubCategory("slgl", "数量规律", "点、线、面、角、素，元素组成凌乱时数"),
-                SubCategory("sxgl", "属性规律", "对称性、曲直性、开闭性，图形规整时看"),
-                SubCategory("ltfg", "立体与分组", "空间重构、截面图、三视图、分组分类")
-            )
-        ),
-        SubGroup(
-            key = "dypd",
-            label = "定义判断",
-            dimension = "按「定义数量 + 设问方向」细分",
-            categories = listOf(
-                SubCategory("ddyd", "单定义判断", "只给一个定义，抓主体、客体、条件、方式、结果五要素"),
-                SubCategory("ddby", "多定义辨析", "多个定义并列，先对号入座再区分相近定义"),
-                SubCategory("fwsw", "反向设问", "「不属于」「不符合」类，须逐项验证后再排除")
-            )
-        ),
-        SubGroup(
-            key = "lbtl",
-            label = "类比推理",
-            dimension = "按「关系层级」细分：先语义、再逻辑、最后语法",
-            categories = listOf(
-                SubCategory("yygx", "语义关系", "近义、反义、比喻象征，先看词义是否相关"),
-                SubCategory("ljgx", "逻辑关系", "全同、包含、交叉、并列、对应（因果、条件、目的）"),
-                SubCategory("yfgx", "语法关系", "主谓、动宾、偏正、并列，词性结构是否一致"),
-                SubCategory("ejby", "二级辨析", "一级关系排除不掉时，用词性、感情色彩、范围大小二次筛选")
-            )
-        ),
-        SubGroup(
-            key = "ljtl",
-            label = "逻辑推理",
-            dimension = "按「题型与论证结构」细分",
-            categories = listOf(
-                SubCategory("fytl", "翻译推理", "假言命题、递推、逆否等价，先翻译成箭头再推"),
-                SubCategory("zjtl", "真假推理", "矛盾关系、反对关系，找不到矛盾就用代入排除"),
-                SubCategory("jqxr", "加强削弱", "先定论点论据，再看是搭桥拆桥还是补否论据"),
-                SubCategory("rqjl", "日常结论", "归纳推理与原因解释，选项不能过度推断"),
-                SubCategory("jspj", "解释评价", "解释矛盾现象、评价论证方法与逻辑漏洞")
-            )
-        )
-    )
-
-    /** 某模块下的子模块列表；没有子模块的模块返回空列表 */
-    fun groupsOf(module: StudyModule): List<SubGroup> = when (module) {
-        StudyModule.VERBAL -> verbal
-        StudyModule.JUDGEMENT -> judgement
-        else -> emptyList()
+    /** 在 Application / ViewModel 初始化时调用一次 */
+    fun load(context: Context) {
+        if (loaded.isNotEmpty()) return
+        val text = context.assets.open("catalog.json").bufferedReader().use { it.readText() }
+        loaded = parse(JSONObject(text))
     }
 
-    fun groupOf(module: StudyModule, groupKey: String): SubGroup? =
-        groupsOf(module).firstOrNull { it.key == groupKey }
+    fun module(key: String): CatalogModule? = loaded[key]
 
-    fun categoryOf(group: SubGroup?, subKey: String): SubCategory? =
-        group?.categories?.firstOrNull { it.key == subKey }
+    fun topicsOf(moduleKey: String): List<Topic> = loaded[moduleKey]?.topics ?: emptyList()
 
-    /** 层级路径文案，例如「言语理解 · 逻辑填空 · 成语辨析」 */
+    fun topicOf(moduleKey: String, topicKey: String): Topic? =
+        topicsOf(moduleKey).firstOrNull { it.key == topicKey }
+
+    fun subOf(moduleKey: String, topicKey: String, subKey: String): SubCategory? =
+        topicOf(moduleKey, topicKey)?.subs?.firstOrNull { it.key == subKey }
+
+    fun hasTopics(moduleKey: String): Boolean = topicsOf(moduleKey).isNotEmpty()
+
+    /** v2.1 手写的英文子类 key → 题库分类（题型 key + 子类名），用于旧数据迁移 */
+    fun legacyMapping(moduleKey: String, groupKey: String, subKey: String): Pair<String, String>? =
+        LEGACY_SUB_MAP["$moduleKey|$groupKey|$subKey"]
+
+    private val LEGACY_SUB_MAP = mapOf(
+        "yy|ltk|yjdy" to ("ltk" to "语境分析"),
+        "yy|ltk|scby" to ("ltk" to "实词填空"),
+        "yy|ltk|cyby" to ("ltk" to "成语填空"),
+        "yy|ltk|glc" to ("ltk" to "语境分析"),
+        "yy|ltk|dkzh" to ("ltk" to "混搭填空"),
+        "yy|pdyy|zxll" to ("pdyy" to "中心理解"),
+        "yy|pdyy|xpjd" to ("pdyy" to "细节判断"),
+        "yy|pdyy|btlr" to ("pdyy" to "标题填入"),
+        "yy|pdyy|yybd" to ("yybd" to "其他"),
+        "yy|pdyy|pwyda" to ("pdyy" to "其他"),
+        "yy|pdyy|pwyd" to ("pdyy" to "其他"),
+        "pd|txxx|wzgl" to ("txxx" to "位置规律"),
+        "pd|txxx|ysgl" to ("txxx" to "样式规律"),
+        "pd|txxx|slgl" to ("txxx" to "数量规律"),
+        "pd|txxx|sxgl" to ("txxx" to "属性规律"),
+        "pd|txxx|ltfg" to ("txxx" to "立体图形"),
+        "pd|dypd|ddyd" to ("dypd" to "单定义"),
+        "pd|dypd|ddby" to ("dypd" to "多定义"),
+        "pd|dypd|fwsw" to ("dypd" to "其他"),
+        "pd|lbtl|yygx" to ("lbtl" to "语义关系"),
+        "pd|lbtl|ljgx" to ("lbtl" to "逻辑关系"),
+        "pd|lbtl|yfgx" to ("lbtl" to "语法关系"),
+        "pd|lbtl|ejby" to ("lbtl" to "其他"),
+        "pd|ljtl|fytl" to ("ljpd" to "翻译推理"),
+        "pd|ljtl|zjtl" to ("ljpd" to "真假推理"),
+        "pd|ljtl|jqxr" to ("ljpd" to "加强削弱"),
+        "pd|ljtl|rqjl" to ("ljpd" to "结论推出"),
+        "pd|ljtl|jspj" to ("ljpd" to "评价型")
+    )
+
+    /** 层级面包屑：言语理解 · 片段阅读 · 中心理解 */
     fun breadcrumb(module: StudyModule, groupKey: String, subKey: String): String {
-        val group = groupOf(module, groupKey) ?: return module.label
-        val category = categoryOf(group, subKey) ?: return "${module.label} · ${group.label}"
-        return "${module.label} · ${group.label} · ${category.label}"
+        val topic = topicOf(module.key, groupKey) ?: return module.label
+        val sub = topic.subs.firstOrNull { it.key == subKey } ?: return "${module.label} · ${topic.label}"
+        return "${module.label} · ${topic.label} · ${sub.label}"
     }
+
+    /** 错因：题型专属 + 通用兜底 */
+    fun reasonsFor(module: StudyModule, topicKey: String): Pair<List<String>, List<String>> {
+        val own = topicOf(module.key, topicKey)?.errors?.takeIf { it.isNotEmpty() }
+            ?: MODULE_ERRORS[module.key].orEmpty()
+        return own to COMMON_REASONS.filter { it !in own }
+    }
+
+    /** 错因输入框的示例文案 */
+    fun hintFor(module: StudyModule, topicKey: String): String {
+        return topicOf(module.key, topicKey)?.hint?.takeIf { it.isNotEmpty() }
+            ?: MODULE_HINTS[module.key]
+            ?: "说说当时是怎么错的"
+    }
+
+    /** 名称输入框的示例：优先用该子类最常见的细分名 */
+    fun namePlaceholder(module: StudyModule, sub: SubCategory?): String {
+        val first = sub?.details?.firstOrNull()?.name
+        if (!first.isNullOrBlank()) return "如：$first"
+        return MODULE_NAME_HINTS[module.key] ?: "如：把某个细节记混了"
+    }
+
+    private fun parse(root: JSONObject): Map<String, CatalogModule> {
+        val modules = root.optJSONArray("modules") ?: JSONArray()
+        val map = LinkedHashMap<String, CatalogModule>()
+        for (i in 0 until modules.length()) {
+            val m = modules.getJSONObject(i)
+            val topicsJson = m.optJSONArray("topics") ?: JSONArray()
+            val topics = ArrayList<Topic>(topicsJson.length())
+            for (j in 0 until topicsJson.length()) {
+                val t = topicsJson.getJSONObject(j)
+                val subsJson = t.optJSONArray("subs") ?: JSONArray()
+                val subs = ArrayList<SubCategory>(subsJson.length())
+                for (k in 0 until subsJson.length()) {
+                    val s = subsJson.getJSONObject(k)
+                    val detailsJson = s.optJSONArray("details") ?: JSONArray()
+                    val details = ArrayList<SubCategory.Detail>(detailsJson.length())
+                    for (d in 0 until detailsJson.length()) {
+                        val one = detailsJson.getJSONObject(d)
+                        details.add(
+                            SubCategory.Detail(
+                                name = one.optString("name"),
+                                count = one.optInt("count")
+                            )
+                        )
+                    }
+                    subs.add(
+                        SubCategory(
+                            key = s.optString("key"),
+                            label = s.optString("label"),
+                            total = s.optInt("total"),
+                            details = details,
+                            merged = s.optInt("merged")
+                        )
+                    )
+                }
+                val errorsJson = t.optJSONArray("errors") ?: JSONArray()
+                val errors = ArrayList<String>(errorsJson.length())
+                for (e in 0 until errorsJson.length()) errors.add(errorsJson.optString(e))
+
+                topics.add(
+                    Topic(
+                        key = t.optString("key"),
+                        label = t.optString("label"),
+                        total = t.optInt("total"),
+                        errors = errors,
+                        hint = t.optString("hint"),
+                        subs = subs
+                    )
+                )
+            }
+            map[m.optString("key")] = CatalogModule(
+                key = m.optString("key"),
+                label = m.optString("label"),
+                short = m.optString("short"),
+                total = m.optInt("total"),
+                topics = topics
+            )
+        }
+        return map
+    }
+
+    private val COMMON_REASONS = listOf("审题不清", "时间不够", "蒙错", "知识点遗忘")
+
+    private val MODULE_ERRORS = mapOf(
+        "zzll" to listOf("时政记混", "理论表述记错", "会议精神混淆"),
+        "cs" to listOf("法律条文混", "历史年代错", "地理常识混", "科技成就记错")
+    )
+
+    private val MODULE_HINTS = mapOf(
+        "zzll" to "把「两个确立」和「两个维护」记混了",
+        "cs" to "把行政复议和行政诉讼搞混了"
+    )
+
+    private val MODULE_NAME_HINTS = mapOf(
+        "zzll" to "如：新发展理念的内涵",
+        "cs" to "如：二十四节气顺序"
+    )
 }

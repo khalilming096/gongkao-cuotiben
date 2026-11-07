@@ -10,9 +10,9 @@
 | `catalog.json` | 分类表，由题库自动生成，供网页版内嵌使用 |
 | `tools/gen_catalog.py` | 从题库 `source` 路径重新生成分类表 |
 | `tools/inject_catalog.py` | 把 `catalog.json` 注入 `index.html` |
-| `公考错题本-v2.1.0.apk` | 安卓安装包，**仍是旧分类（v2.1）**，尚未同步本次改动 |
+| `公考错题本-v3.0.0.apk` | 安卓安装包（v3.0），分类与网页版同源，都读 `catalog.json` |
 
-> ⚠️ 本次只改网页版。安卓端（`android/`）仍使用手写的 27 个子类，与网页版的题库分类不一致，待确认后再同步。
+> 安卓端已同步题库分类：`catalog.json` 打包在 `assets` 里，App 启动时读取。**备份导出/导入目前只有网页版有**，安卓端待补。安装包体积大，不入库，只保留在本地目录。
 
 ---
 
@@ -145,10 +145,10 @@ python tools/inject_catalog.py   # 把 catalog.json 注入 index.html
 ├── tools/
 │   ├── gen_catalog.py           # 生成分类表
 │   └── inject_catalog.py        # 注入到 index.html
-├── 公考错题本-v2.1.0.apk        # 安卓包（旧分类，未同步）
+├── 公考错题本-v3.0.0.apk        # 安卓包（已同步题库分类）
 ├── README.md
-└── android/                     # 安卓工程（v2.1，待同步 P0）
+└── android/                     # 安卓工程（v3.0，与网页版同源）
     └── app/src/main/java/com/gongkao/cuotiben/
-        ├── model/Catalog.kt     # 手写的 27 个子类（待替换为题库分类）
+        ├── model/Catalog.kt     # 读 assets/catalog.json
         └── ...
 ```

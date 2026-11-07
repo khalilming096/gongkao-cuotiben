@@ -71,7 +71,8 @@ fun HomeScreen(
                 module = module,
                 pointCount = points.count { it.moduleKey == module.key },
                 errorCount = errorCountOf(points, records, module.key),
-                subGroupCount = Catalog.groupsOf(module).size,
+                topicCount = Catalog.topicsOf(module.key).size,
+                bankTotal = Catalog.module(module.key)?.total ?: 0,
                 onClick = { onOpenModule(module) }
             )
         }
@@ -156,10 +157,12 @@ private fun ModuleCard(
     module: StudyModule,
     pointCount: Int,
     errorCount: Int,
-    subGroupCount: Int,
+    topicCount: Int,
+    bankTotal: Int,
     onClick: () -> Unit
 ) {
-    val hasSubGroups = subGroupCount > 0
+    val hasTopics = topicCount > 0
+    val subLine = if (hasTopics) "题库 $bankTotal 题 · $topicCount 个题型" else module.subtitle
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -197,7 +200,7 @@ private fun ModuleCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = module.subtitle,
+                    text = subLine,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
@@ -209,13 +212,13 @@ private fun ModuleCard(
             Column(horizontalAlignment = Alignment.End) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = if (hasSubGroups) subGroupCount.toString() else pointCount.toString(),
+                        text = pointCount.toString(),
                         fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = if (hasSubGroups) " 个子模块" else " 个知识点",
+                        text = " 个知识点",
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 1.dp)

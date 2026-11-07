@@ -31,8 +31,11 @@ abstract class CuotiDao {
     @Query("DELETE FROM error_records WHERE id = :id")
     abstract suspend fun deleteRecord(id: Long)
 
-    @Query("UPDATE error_records SET note = :note WHERE id = :id")
-    abstract suspend fun updateRecordNote(id: Long, note: String)
+    @Query("UPDATE error_records SET note = :note, qid = :qid WHERE id = :id")
+    abstract suspend fun updateRecordContent(id: Long, note: String, qid: String)
+
+    @Query("SELECT * FROM knowledge_points")
+    abstract suspend fun allPoints(): List<KnowledgePoint>
 
     @Query("SELECT * FROM error_records WHERE pointId = :pointId ORDER BY timestamp DESC, id DESC LIMIT 1")
     abstract suspend fun latestRecord(pointId: Long): ErrorRecord?

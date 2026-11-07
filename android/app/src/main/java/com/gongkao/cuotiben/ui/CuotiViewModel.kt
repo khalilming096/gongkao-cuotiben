@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.gongkao.cuotiben.data.AppDatabase
 import com.gongkao.cuotiben.data.ErrorRecord
 import com.gongkao.cuotiben.data.KnowledgePoint
+import com.gongkao.cuotiben.model.Catalog
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -14,6 +15,27 @@ import kotlinx.coroutines.launch
 class CuotiViewModel(app: Application) : AndroidViewModel(app) {
 
     private val dao = AppDatabase.get(app).dao()
+
+    init {
+        Catalog.load(app)
+        viewModelScope.launch { migrateLegacyCategories() }
+    }
+
+    /**
+     * v2.1 的知识点用的是手写英文子类 key，如果在新题库分类里找不到，
+     * 按映射表换过去；映射不到的归为「未归类」，不丢数据。
+     */
+    private suspend fun migrateLegacyCategories() {
+        dao.allPoints().forEach { p ->
+            if (p.groupKey.isEmpty()) return@forEach
+            if (Catalog.subOf(p.moduleKey, p.groupKey, p.subKey) != null) return@forEach
+            val hit = Catalog.legacyMapping(p.moduleKey, p.groupKey, p.subKey)
+            dao.updatePoint(
+                if (hit != null) p.copy(groupKey = hit.first, subKey = hit.second)
+                else p.copy(groupKey = "", subKey = "")
+            )
+        }
+    }
 
     val points: StateFlow<List<KnowledgePoint>> = dao.observePoints()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -84,8 +106,10 @@ class CuotiViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch { dao.removeRecord(record) }
     }
 
-    /** 修改某一条错误记录的备注 */
-    fun updateRecordNote(record: ErrorRecord, note: String) {
-        viewModelScope.launch { dao.updateRecordNote(record.id, note.trim()) }
+    /** 修改某一条错误记录的备注与题号 */
+    fun updateRecordContent(record: ErrorRecord, note: String, qid: String) {
+        viewModelScope.launch {
+            dao.updateRecordContent(record.id, note.trim(), qid.trim())
+        }
     }
 }
