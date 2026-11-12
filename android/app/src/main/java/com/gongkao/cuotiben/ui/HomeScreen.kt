@@ -38,7 +38,9 @@ import com.gongkao.cuotiben.data.ErrorRecord
 import com.gongkao.cuotiben.data.KnowledgePoint
 import com.gongkao.cuotiben.model.Catalog
 import com.gongkao.cuotiben.model.StudyModule
+import com.gongkao.cuotiben.ui.components.BankNote
 import com.gongkao.cuotiben.ui.components.SectionLabel
+import com.gongkao.cuotiben.ui.components.formatCount
 import com.gongkao.cuotiben.util.TimeText
 
 @Composable
@@ -64,7 +66,7 @@ fun HomeScreen(
             )
         }
         item {
-            SectionLabel(text = "选择模块", endText = "共 5 个模块")
+            SectionLabel(text = "选择模块", endText = "共 ${StudyModule.values().size} 个模块")
         }
         items(StudyModule.values().toList()) { module ->
             ModuleCard(
@@ -72,8 +74,13 @@ fun HomeScreen(
                 pointCount = points.count { it.moduleKey == module.key },
                 errorCount = errorCountOf(points, records, module.key),
                 topicCount = Catalog.topicsOf(module.key).size,
-                bankTotal = Catalog.module(module.key)?.total ?: 0,
                 onClick = { onOpenModule(module) }
+            )
+        }
+        item {
+            BankNote(
+                text = "题库共 " + formatCount(Catalog.total) + " 题 · "
+                    + Catalog.topicTotal + " 个题型 · " + Catalog.subTotal + " 个子类"
             )
         }
     }
@@ -129,7 +136,7 @@ private fun OverviewCard(
                 horizontalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 StatBlock("知识点", "$totalPoints 个")
-                StatBlock("覆盖模块", "$modulesCovered / 5")
+                StatBlock("覆盖模块", "$modulesCovered / ${StudyModule.values().size}")
                 StatBlock("最近记录", latestText)
             }
         }
@@ -158,11 +165,10 @@ private fun ModuleCard(
     pointCount: Int,
     errorCount: Int,
     topicCount: Int,
-    bankTotal: Int,
     onClick: () -> Unit
 ) {
     val hasTopics = topicCount > 0
-    val subLine = if (hasTopics) "题库 $bankTotal 题 · $topicCount 个题型" else module.subtitle
+    val subLine = if (hasTopics) "$topicCount 个题型" else module.subtitle
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,

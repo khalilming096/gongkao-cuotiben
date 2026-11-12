@@ -109,7 +109,7 @@ fun PointEditorDialog(
                         topic.subs.forEach { sub ->
                             KeyChip(
                                 label = sub.label,
-                                badge = sub.total.toString(),
+                                badge = null,
                                 selected = subKey == sub.key,
                                 onClick = { subKey = sub.key }
                             )
@@ -118,11 +118,9 @@ fun PointEditorDialog(
                     val basis = when {
                         selectedSub == null -> ""
                         selectedSub.details.isNotEmpty() ->
-                            "${selectedSub.total} 题 · 常见细分：" +
-                                selectedSub.details.take(5).joinToString("、") { it.name }
-                        selectedSub.merged > 0 ->
-                            "${selectedSub.total} 题 · 含 ${selectedSub.merged} 个小类"
-                        else -> "${selectedSub.total} 题"
+                            "常见细分：" + selectedSub.details.take(5).joinToString("、") { it.name }
+                        selectedSub.merged > 0 -> "含 ${selectedSub.merged} 个小类"
+                        else -> ""
                     }
                     Text(
                         text = basis,
@@ -239,9 +237,9 @@ private fun appendReason(current: String, item: String): String {
     }
 }
 
-/** 子类胶囊，右侧带题量 */
+/** 子类胶囊；badge 为 null 时只显示名字 */
 @Composable
-private fun KeyChip(label: String, badge: String, selected: Boolean, onClick: () -> Unit) {
+private fun KeyChip(label: String, badge: String? = null, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
@@ -256,13 +254,15 @@ private fun KeyChip(label: String, badge: String, selected: Boolean, onClick: ()
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
                 color = if (selected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Spacer(Modifier.padding(2.dp))
-            Text(
-                text = badge,
-                fontSize = 10.5.sp,
-                color = if (selected) Color.White.copy(alpha = 0.75f)
-                else MaterialTheme.colorScheme.outline
-            )
+            if (badge != null) {
+                Spacer(Modifier.padding(2.dp))
+                Text(
+                    text = badge,
+                    fontSize = 10.5.sp,
+                    color = if (selected) Color.White.copy(alpha = 0.75f)
+                    else MaterialTheme.colorScheme.outline
+                )
+            }
         }
     }
 }
@@ -486,12 +486,12 @@ fun InfoDialog(onDismiss: () -> Unit) {
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                InfoLine("① 五个模块固定；言语理解、判断推理、资料分析的题型与子类取自你的题库，共 14 个题型、78 个子类、18,011 题。")
+                InfoLine("① 六个模块固定；言语理解、判断推理、资料分析的题型与子类取自你的题库，共 14 个题型、78 个子类、18,011 题。")
                 InfoLine("② 子类后面的数字是该子类的真实题量，题量大的更值得先补。")
                 InfoLine("③ 新增时先选子类，名称可以从「常见细分」里点选；错因会按题型给出专属选项。")
                 InfoLine("④ 清单左侧圆圈勾选一次＝又错了一次，误触可在提示条里撤销。")
                 InfoLine("⑤ 详情页每条记录可填题库题号，方便回题库翻原题。")
-                InfoLine("⑥ 政治理论、常识没有题库分类，直接用模块级错因记录。")
+                InfoLine("⑥ 政治理论、常识、数量关系没有题库分类，直接用模块级错因记录。")
             }
         },
         confirmButton = {

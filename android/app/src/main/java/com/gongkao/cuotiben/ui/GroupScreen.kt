@@ -36,7 +36,9 @@ import com.gongkao.cuotiben.data.KnowledgePoint
 import com.gongkao.cuotiben.model.Catalog
 import com.gongkao.cuotiben.model.StudyModule
 import com.gongkao.cuotiben.model.Topic
+import com.gongkao.cuotiben.ui.components.BankNote
 import com.gongkao.cuotiben.ui.components.EmptyState
+import com.gongkao.cuotiben.ui.components.formatCount
 import com.gongkao.cuotiben.ui.components.PointRow
 import com.gongkao.cuotiben.ui.components.SectionLabel
 
@@ -62,7 +64,7 @@ fun GroupScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         item {
-            SectionLabel(text = "选择题型", endText = "题库共 $catalogTotal 题")
+            SectionLabel(text = "选择题型", endText = "按题库题量由多到少")
         }
         items(topics, key = { it.key }) { topic ->
             val topicPoints = points.filter { it.moduleKey == module.key && it.groupKey == topic.key }
@@ -141,6 +143,9 @@ fun GroupScreen(
                 }
             }
         }
+        item {
+            BankNote(text = "本题库 " + formatCount(catalogTotal) + " 题")
+        }
     }
 }
 
@@ -189,7 +194,7 @@ private fun TopicCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "${topic.subs.size} 个子类 · ${topic.total} 题",
+                    text = "${topic.subs.size} 个子类",
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,

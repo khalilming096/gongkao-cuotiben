@@ -132,10 +132,7 @@ fun CuotiApp(vm: CuotiViewModel = viewModel()) {
             val n = points.count { it.moduleKey == moduleKey && it.groupKey == routeTopic.key }
             "${routeTopic.subs.size} 个子类 · $n 个知识点"
         }
-        onTopicList -> {
-            val total = routeModule?.let { Catalog.module(it.key)?.total } ?: 0
-            "${groups.size} 个题型 · 共 $total 题"
-        }
+        onTopicList -> "${groups.size} 个题型"
         routeModule != null -> moduleSubtitle(points, records, routeModule)
         else -> null
     }

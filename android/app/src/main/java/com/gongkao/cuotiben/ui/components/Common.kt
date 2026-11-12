@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 @Composable
 fun AppBar(
@@ -112,6 +113,24 @@ fun SectionLabel(text: String, endText: String? = null) {
             )
         }
     }
+}
+
+/** 数字加千分位：18011 → 18,011 */
+fun formatCount(n: Int): String = String.format(java.util.Locale.US, "%,d", n)
+
+/** 页脚：题库规模等背景信息，刻意做小做淡，不抢视线 */
+@Composable
+fun BankNote(text: String) {
+    Text(
+        text = text,
+        fontSize = 10.5.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.72f),
+        textAlign = TextAlign.Center,
+        letterSpacing = 0.3.sp,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 12.dp, bottom = 4.dp)
+    )
 }
 
 @Composable

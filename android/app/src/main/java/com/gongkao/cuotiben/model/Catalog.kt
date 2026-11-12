@@ -48,6 +48,15 @@ object Catalog {
         loaded = parse(JSONObject(text))
     }
 
+    /** 三个有题库模块的题目总数 */
+    val total: Int get() = loaded.values.sumOf { it.total }
+
+    /** 题型总数 */
+    val topicTotal: Int get() = loaded.values.sumOf { it.topics.size }
+
+    /** 子类总数 */
+    val subTotal: Int get() = loaded.values.sumOf { m -> m.topics.sumOf { it.subs.size } }
+
     fun module(key: String): CatalogModule? = loaded[key]
 
     fun topicsOf(moduleKey: String): List<Topic> = loaded[moduleKey]?.topics ?: emptyList()
@@ -187,16 +196,19 @@ object Catalog {
 
     private val MODULE_ERRORS = mapOf(
         "zzll" to listOf("时政记混", "理论表述记错", "会议精神混淆"),
-        "cs" to listOf("法律条文混", "历史年代错", "地理常识混", "科技成就记错")
+        "cs" to listOf("法律条文混", "历史年代错", "地理常识混", "科技成就记错"),
+        "sl" to listOf("公式记错", "题干条件看漏", "计算失误", "没思路")
     )
 
     private val MODULE_HINTS = mapOf(
         "zzll" to "把「两个确立」和「两个维护」记混了",
-        "cs" to "把行政复议和行政诉讼搞混了"
+        "cs" to "把行政复议和行政诉讼搞混了",
+        "sl" to "相遇追及公式用成了追及的"
     )
 
     private val MODULE_NAME_HINTS = mapOf(
         "zzll" to "如：新发展理念的内涵",
-        "cs" to "如：二十四节气顺序"
+        "cs" to "如：二十四节气顺序",
+        "sl" to "如：相遇追及问题"
     )
 }
