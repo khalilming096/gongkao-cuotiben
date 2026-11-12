@@ -182,7 +182,9 @@ python tools/inject_catalog.py   # 把 catalog.json 注入 index.html
 ├── tools/
 │   ├── gen_catalog.py           # 生成分类表
 │   ├── inject_catalog.py        # 注入到 index.html
-│   └── sync_fenbi.py            # 粉笔采集数据 → 可导入的备份 JSON
+│   ├── sync_fenbi.py            # 粉笔采集数据 → 可导入的备份 JSON
+│   ├── analyze_threshold.py     # 子类合并阈值对比（说明 MIN_SUB=10 的依据）
+│   └── make_sample.py           # 生成一份测试用备份，方便本地看效果
 ├── data/
 │   └── collection-*/            # 每次同步的产物：backup.json / 同步报告.md / raw/
 ├── 公考错题本-v3.1.0.apk        # 安卓包（v3.1，含内置错题数据）
