@@ -10,9 +10,13 @@
 | `catalog.json` | 分类表，由题库自动生成，供网页版内嵌使用 |
 | `tools/gen_catalog.py` | 从题库 `source` 路径重新生成分类表 |
 | `tools/inject_catalog.py` | 把 `catalog.json` 注入 `index.html` |
-| `公考错题本-v3.0.0.apk` | 安卓安装包（v3.0），分类与网页版同源，都读 `catalog.json` |
+| `tools/sync_fenbi.py` | 把粉笔采集的作答记录转成可导入的错题备份 |
+| `公考错题本-v3.1.0.apk` | 安卓安装包（v3.1），分类与网页版同源，都读 `catalog.json`；首启内置一份错题数据 |
 
-> 安卓端已同步题库分类：`catalog.json` 打包在 `assets` 里，App 启动时读取。**备份导出/导入目前只有网页版有**，安卓端待补。安装包体积大，不入库，只保留在本地目录。
+> 安卓端已同步题库分类：`catalog.json` 打包在 `assets` 里，App 启动时读取；首启还会把 `assets/seed-backup.json` 里的错题导进 Room。
+> **备份导出/导入目前只有网页版有**，安卓端待补。
+>
+> 仓库里**不含**安装包与个人做题数据（见文末「九、仓库里不包含什么」），这些只留在本地。
 
 ---
 
@@ -49,7 +53,7 @@
 1. 题量 < 10 的子类合并为「其他」，避免筛选条被 1 题的小类塞满（原始有 300 多个细分）；
 2. 每个子类保留题库里最常见的细分名（如「中心理解」下面是关联词-对策 396、主题词 362、关联词-转折 285），新增知识点时可以一键点选，不用自己想名字。
 
-政治理论、常识两个模块题库里没有，仍直接挂知识点。
+政治理论、常识、数量关系三个模块题库里没有，仍直接挂知识点。
 
 ---
 
@@ -77,7 +81,7 @@
 | 简单计算 | 加减错位、排序看漏、单位不统一 |
 | 综合分析 | 选项顺序乱、漏看「不正确」、中途放弃 |
 
-政治理论、常识没有题库分类，用模块级错因（时政记混／法律条文混等）+ 通用兜底。
+政治理论、常识、数量关系没有题库分类，用模块级错因（时政记混／法律条文混／公式记错等）+ 通用兜底。
 
 两处示例文案也随层级变化：
 
@@ -90,9 +94,9 @@
 
 | 功能 | 位置 |
 | --- | --- |
-| 主界面五个固定模块，显示我的知识点数与题库规模 | 主页 |
-| 模块 → 题型卡片（子类数、题量、我的知识点数） | 题型列表 |
-| 题型 → 按子类分组，标题带题量与常见细分 | 子类清单 |
+| 主界面六个固定模块，显示我的知识点数与累计错误；题库规模降级到页脚淡字 | 主页 |
+| 模块 → 题型卡片（子类数、我的知识点数） | 题型列表 |
+| 题型 → 按子类分组，标题只显示知识点数；常见细分只列名字不带题量 | 子类清单 |
 | 新增知识点（先选子类，名称可点选推荐） | 底部「新增知识点」 |
 | 勾选一次＝记一次错，4.5 秒内可撤销 | 卡片左侧圆圈 |
 | 单条记录补充题号与备注、单独删除 | 详情页「⋯」 |
@@ -107,11 +111,13 @@ point  = {id, mod, g, s, name, reason, count, created}
 record = {id, pid, ts, n: 备注, q: 题库题号}
 ```
 
-- `mod`：`zzll` / `cs` / `yy` / `pd` / `zl`
+- `mod`：`zzll`（政治理论）/ `cs`（常识）/ `yy`（言语理解）/ `sl`（数量关系）/ `pd`（判断推理）/ `zl`（资料分析）
 - `g`：题型 key，如 `pdyy`（片段阅读）、`zz`（增长）；空串表示未归类
 - `s`：子类名，如 `中心理解`、`一般增长率计算`
 - `count` 与该知识点的记录条数保持一致（勾选、撤销、删除都在同一步里同步）
 - 旧数据（v1/v2）首次打开会自动迁移：英文子类 key 按映射表换成题库分类，映射不到的归入「未归类」，可在题型列表底部进入重新归类
+
+安卓端同一套字段落进 Room（数据库 version 4）：`knowledge_points` 对应 point，`error_records` 对应 record，另有 `note` / `qid` 两列。
 
 ---
 
@@ -125,7 +131,38 @@ record = {id, pid, ts, n: 备注, q: 题库题号}
 
 ---
 
-## 六、题库更新后重新生成分类
+## 六、从粉笔采集数据同步错题
+
+采集产物（`answered_questions.jsonl`）→ 错题本备份 JSON：
+
+```bash
+python tools/sync_fenbi.py                       # 用默认采集目录
+python tools/sync_fenbi.py <采集目录>            # 指定目录
+```
+
+产出在 `data/<采集批次>/`：`backup.json`（导入用）、`同步报告.md`（映射明细）、`raw/`（原始数据留档）。
+
+映射规则：
+
+| 环节 | 规则 |
+| --- | --- |
+| 模块 | 言语理解与表达→`yy`，判断推理→`pd`，资料分析→`zl`，常识判断→`cs`，数量关系→`sl`，政治理论→`zzll` |
+| 标签→子类 | 先精确匹配，再按前缀最长匹配（`对应关系-前后呼应`→逻辑填空/语境分析） |
+| 归属 vs 名称 | 归属用题型层（实词/混搭/成语填空），名称用技巧层（对应关系/词的辨析），形成「混搭填空 / 对应关系-前后呼应」 |
+| 材料类型 | 资料分析的「文字资料/统计图/综合资料」是载体不是考点，直接忽略 |
+| 对不上 | 归「未归类」，App 里可手动重新归类 |
+| 次数 | 一道错题＝一条记录，`count` 恒等于记录数，不会虚高 |
+| 题号 | `question_alias` 写进记录，用于回题库翻原题 |
+
+同一批次重复导入不会翻倍（合并式导入，记录按时间戳去重）。
+
+安卓端不走导入按钮：把 `backup.json` 放到 `android/app/src/main/assets/seed-backup.json`，
+`data/SeedImporter.kt` 会在**首页首次启动时**读它写进 Room（IO 线程、单事务、只导一次，
+用 SharedPreferences 的 `fenbi_seed_v1` 标记）。数据库里已有数据则跳过，不会覆盖。
+
+---
+
+## 七、题库更新后重新生成分类
 
 ```bash
 python tools/gen_catalog.py      # 读题库 source 路径 → catalog.json
@@ -136,7 +173,7 @@ python tools/inject_catalog.py   # 把 catalog.json 注入 index.html
 
 ---
 
-## 七、目录结构
+## 八、目录结构
 
 ```
 错题记录/
@@ -144,11 +181,35 @@ python tools/inject_catalog.py   # 把 catalog.json 注入 index.html
 ├── catalog.json                 # 分类表（14 题型 / 78 子类 / 18011 题）
 ├── tools/
 │   ├── gen_catalog.py           # 生成分类表
-│   └── inject_catalog.py        # 注入到 index.html
-├── 公考错题本-v3.0.0.apk        # 安卓包（已同步题库分类）
+│   ├── inject_catalog.py        # 注入到 index.html
+│   └── sync_fenbi.py            # 粉笔采集数据 → 可导入的备份 JSON
+├── data/
+│   └── collection-*/            # 每次同步的产物：backup.json / 同步报告.md / raw/
+├── 公考错题本-v3.1.0.apk        # 安卓包（v3.1，含内置错题数据）
 ├── README.md
-└── android/                     # 安卓工程（v3.0，与网页版同源）
-    └── app/src/main/java/com/gongkao/cuotiben/
-        ├── model/Catalog.kt     # 读 assets/catalog.json
-        └── ...
+└── android/                     # 安卓工程（v3.1，与网页版同源）
+    └── app/src/main/
+        ├── assets/catalog.json          # 分类表（入库）
+        ├── assets/seed-backup.json      # 首启导入的错题数据（不入库，本地生成）
+        └── java/com/gongkao/cuotiben/
+            ├── model/Catalog.kt         # 读 assets/catalog.json
+            ├── data/SeedImporter.kt     # 首启把 seed-backup.json 写进 Room
+            └── ...
 ```
+
+---
+
+## 九、仓库里不包含什么
+
+这些东西**只留在本地**，不会推到 GitHub（`.gitignore` 已排除，推送脚本还会再拦一道）：
+
+| 路径 | 是什么 | 怎么重新生成 |
+| --- | --- | --- |
+| `*.apk` | 安卓安装包（16 MB） | `android/rebuild.bat` 或 gradle `assembleDebug` |
+| `data/` | 粉笔采集的作答记录、错题备份、同步报告 | `python tools/sync_fenbi.py` |
+| `android/app/src/main/assets/seed-backup.json` | 首启内置的错题数据 | 复制 `data/<批次>/backup.json` |
+| `*.db` / `cuotiben-backup-*.json` | 本地数据库与导出备份 | App 内导出 |
+| `userscripts/` / `.testdata/` | 调试用的第三方脚本与预览副本 | — |
+| `推送到GitHub.bat` | 含个人仓库地址与本地 Git 路径 | — |
+
+所以 clone 下来直接编译，App 是空的（没有内置错题）；想要数据就得自己生成一份放进去。

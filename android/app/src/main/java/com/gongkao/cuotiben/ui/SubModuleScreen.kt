@@ -31,7 +31,9 @@ import com.gongkao.cuotiben.data.ErrorRecord
 import com.gongkao.cuotiben.data.KnowledgePoint
 import com.gongkao.cuotiben.model.SubCategory
 import com.gongkao.cuotiben.model.Topic
+import com.gongkao.cuotiben.ui.components.BankNote
 import com.gongkao.cuotiben.ui.components.EmptyState
+import com.gongkao.cuotiben.ui.components.formatCount
 import com.gongkao.cuotiben.ui.components.PointRow
 import com.gongkao.cuotiben.util.TimeText
 
@@ -53,7 +55,7 @@ fun SubModuleScreen(
 ) {
     if (points.isEmpty()) {
         Column(modifier = Modifier.fillMaxSize()) {
-            DimensionBar(topic)
+            DimensionBar()
             FlowRow(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -91,7 +93,7 @@ fun SubModuleScreen(
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        item { DimensionBar(topic) }
+        item { DimensionBar() }
 
         item {
             FlowRow(
@@ -155,13 +157,17 @@ fun SubModuleScreen(
                 PointItem(point, records, onCheck, onOpen)
             }
         }
+
+        item {
+            BankNote(text = topic.label + " 题库 " + formatCount(topic.total) + " 题")
+        }
     }
 }
 
 private fun subHint(sub: SubCategory): String {
     val details = sub.details
     if (details.isNotEmpty()) {
-        return details.take(4).joinToString(" · ") { "${it.name} ${it.count}" }
+        return details.take(4).joinToString(" · ") { it.name }
     }
     return if (sub.merged > 0) "含 ${sub.merged} 个小类" else ""
 }
@@ -184,7 +190,7 @@ private fun PointItem(
 }
 
 @Composable
-private fun DimensionBar(topic: Topic) {
+private fun DimensionBar() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -195,14 +201,14 @@ private fun DimensionBar(topic: Topic) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = "子类题量",
+            text = "子类",
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary
         )
         Spacer(Modifier.width(8.dp))
         Text(
-            text = "${topic.label} 共 ${topic.total} 题，按题库真实题量排序；题量大的更值得先补",
+            text = "点子类可只看这一类；新增时选好子类，会自动归到当前子类",
             fontSize = 12.sp,
             color = MaterialTheme.colorScheme.primary
         )
@@ -259,7 +265,7 @@ private fun SubHeader(title: String, total: Int, count: Int, hint: String) {
             )
             Spacer(Modifier.width(6.dp))
             Text(
-                text = if (total > 0) "$total 题 · $count 个知识点" else "$count 个",
+                text = if (total > 0) "$count 个知识点" else "$count 个",
                 fontSize = 11.5.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.gongkao.cuotiben.data.AppDatabase
 import com.gongkao.cuotiben.data.ErrorRecord
 import com.gongkao.cuotiben.data.KnowledgePoint
+import com.gongkao.cuotiben.data.SeedImporter
 import com.gongkao.cuotiben.model.Catalog
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +19,11 @@ class CuotiViewModel(app: Application) : AndroidViewModel(app) {
 
     init {
         Catalog.load(app)
-        viewModelScope.launch { migrateLegacyCategories() }
+        viewModelScope.launch {
+            // 首次启动导入内置错题数据（assets/seed-backup.json），已有数据则跳过
+            SeedImporter.importIfNeeded(app, AppDatabase.get(app))
+            migrateLegacyCategories()
+        }
     }
 
     /**

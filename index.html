@@ -115,6 +115,12 @@
   .grp .g-t span:last-child{font-size:11.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
   .grp .g-b{font-size:11.5px;color:var(--ink3);margin-top:2px;line-height:1.5}
 
+  /* ---------- 页脚：题库规模，只做背景信息 ---------- */
+  .bank-note{
+    font-size:10.5px;color:var(--ink3);opacity:.72;text-align:center;
+    letter-spacing:.3px;margin:22px 0 4px;font-variant-numeric:tabular-nums;
+  }
+
   /* ---------- 知识点卡片 ---------- */
   .pt{
     background:var(--card); border-radius:var(--r); padding:13px 14px 12px 12px; margin-bottom:10px;
@@ -447,6 +453,7 @@ const MODULES = [
   { key:'zzll', name:'政治理论', short:'政', sub:'时政热点 · 理论 · 党建', color:'#C0392B', bg:'#FBEDEC' },
   { key:'cs',   name:'常识',     short:'常', sub:'法律 · 历史 · 科技 · 地理', color:'#B4791C', bg:'#FBF3E2' },
   { key:'yy',   name:'言语理解', short:'言', sub:'', color:'#1F7A6B', bg:'#E6F4F0' },
+  { key:'sl',   name:'数量关系', short:'数', sub:'行程 · 工程 · 排列组合 · 几何', color:'#7B4FBF', bg:'#F0EAFB' },
   { key:'pd',   name:'判断推理', short:'判', sub:'', color:'#4C4FBF', bg:'#ECECFB' },
   { key:'zl',   name:'资料分析', short:'资', sub:'', color:'#2B6CB0', bg:'#E8F0FA' }
 ];
@@ -494,18 +501,21 @@ const LEGACY_SUB_MAP = {
 /* 错因分两层：题型专属（由题库分类表带出）+ 跨题型通用兜底 */
 const COMMON_REASONS = ['审题不清', '时间不够', '蒙错', '知识点遗忘'];
 
-/* 没有题库的两个模块，用模块级错因 */
+/* 没有题库的三个模块，用模块级错因 */
 const MODULE_ERRORS = {
   zzll: ['时政记混', '理论表述记错', '会议精神混淆'],
-  cs: ['法律条文混', '历史年代错', '地理常识混', '科技成就记错']
+  cs: ['法律条文混', '历史年代错', '地理常识混', '科技成就记错'],
+  sl: ['公式记错', '题干条件看漏', '计算失误', '没思路']
 };
 const MODULE_HINTS = {
   zzll: '把「两个确立」和「两个维护」记混了',
-  cs: '把行政复议和行政诉讼搞混了'
+  cs: '把行政复议和行政诉讼搞混了',
+  sl: '相遇追及公式用成了追及的'
 };
 const MODULE_NAME_HINTS = {
   zzll: '如：新发展理念的内涵',
-  cs: '如：二十四节气顺序'
+  cs: '如：二十四节气顺序',
+  sl: '如：相遇追及问题'
 };
 
 /** 名称输入框的示例：优先用该子类题库里最常见的细分名 */
@@ -635,17 +645,17 @@ function renderHome(view){
       <div class="ov-n">${total}<small>次</small></div>
       <div class="ov-row">
         <div>知识点<b>${pts} 个</b></div>
-        <div>覆盖模块<b>${MODULES.filter(m=>pointsOf(m.key).length).length} / 5</b></div>
+        <div>覆盖模块<b>${MODULES.filter(m=>pointsOf(m.key).length).length} / ${MODULES.length}</b></div>
         <div>最近记录<b>${recent ? fmt(recent) : '—'}</b></div>
       </div>
     </div>
-    <div class="sec-t"><span>选择模块</span><span>共 5 个模块</span></div>
+    <div class="sec-t"><span>选择模块</span><span>共 ${MODULES.length} 个模块</span></div>
     ${MODULES.map(m => {
       const tp = topicsOf(m.key);
       const cm = catModule(m.key);
       const ps = pointsOf(m.key), c = errTotalOf(m.key);
       const right = `<div class="m-cnt"><b>${ps.length}</b> 个知识点</div>`;
-      const subLine = cm ? `题库 ${cm.total} 题 · ${tp.length} 个题型` : m.sub;
+      const subLine = cm ? `${tp.length} 个题型` : m.sub;
       return `<div class="mod" data-act="open" data-key="${m.key}">
         <div class="glyph" style="background:${m.bg};color:${m.color}">${m.short}</div>
         <div>
@@ -656,6 +666,7 @@ function renderHome(view){
         <svg class="chev" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
       </div>`;
     }).join('')}
+    <div class="bank-note">题库共 ${CATALOG.total.toLocaleString()} 题 · ${CATALOG.modules.reduce((a,m)=>a+m.topics.length,0)} 个题型 · ${CATALOG.modules.reduce((a,m)=>a+m.topics.reduce((b,t)=>b+t.subs.length,0),0)} 个子类</div>
   `;
 }
 
@@ -664,19 +675,19 @@ function renderGroups(view, modKey){
   const m = modOf(modKey), tp = topicsOf(modKey), cm = catModule(modKey);
   if (!cm){ route = { name:'module', mod: modKey }; return render(); }  // 无题库的模块走普通清单
   const loose = pointsOf(modKey).filter(p => !p.g);
-  $('title').innerHTML = `${m.name}<span class="sub">${tp.length} 个题型 · ${cm.total} 题</span>`;
+  $('title').innerHTML = `${m.name}<span class="sub">${tp.length} 个题型</span>`;
   $('backBtn').style.display = 'flex';
   $('addbar').style.display = 'none';
 
   view.innerHTML = `
-    <div class="sec-t"><span>选择题型</span><span>题库共 ${cm.total} 题</span></div>
+    <div class="sec-t"><span>选择题型</span><span>按题库题量由多到少</span></div>
     ${tp.map(g => {
       const c = errTotalOfGroup(modKey, g.key), n = pointsOfGroup(modKey, g.key).length;
       return `<div class="mod" data-act="open-group" data-mod="${modKey}" data-g="${g.key}">
         <div class="glyph" style="background:${m.bg};color:${m.color}">${g.label.slice(0,1)}</div>
         <div>
           <div class="m-name">${g.label}</div>
-          <div class="m-sub">${g.subs.length} 个子类 · ${g.total} 题</div>
+          <div class="m-sub">${g.subs.length} 个子类</div>
         </div>
         <div class="m-right">
           <div class="m-cnt"><b>${n}</b> 个知识点</div>
@@ -697,6 +708,7 @@ function renderGroups(view, modKey){
       </div>
       <svg class="chev" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
     </div>` : ''}
+    <div class="bank-note">本题库 ${cm.total.toLocaleString()} 题</div>
   `;
 }
 
@@ -725,8 +737,7 @@ function renderGroup(view, modKey, gKey){
   $('backBtn').style.display = 'flex';
   $('addbar').style.display = 'flex';
 
-  const dimBar = '<div class="dim"><b>子类题量</b><span>' + g.label + ' 共 ' + g.total
-    + ' 题，按题库真实题量排序；题量大的子类更值得先补</span></div>';
+  const dimBar = '<div class="dim"><b>子类</b><span>点子类可只看这一类；新增时选好子类，会自动归到当前子类</span></div>';
 
   if (!all.length){
     view.innerHTML = dimBar
@@ -750,9 +761,9 @@ function renderGroup(view, modKey, gKey){
   shown.forEach(s => {
     const ps = all.filter(p => p.s === s.key);
     const hint = (s.details && s.details.length)
-      ? s.details.slice(0, 4).map(d => d.name + ' ' + d.count).join(' · ')
+      ? s.details.slice(0, 4).map(d => d.name).join(' · ')
       : (s.merged ? '含 ' + s.merged + ' 个小类' : '');
-    body += '<div class="grp"><div class="g-t"><span>' + s.label + '</span><span>' + s.total + ' 题 · ' + ps.length + ' 个知识点</span></div>'
+    body += '<div class="grp"><div class="g-t"><span>' + s.label + '</span><span>' + ps.length + ' 个知识点</span></div>'
       + (hint ? '<div class="g-b">' + hint + '</div>' : '') + '</div>';
     body += ps.map(p => pointHtml(p)).join('');
   });
@@ -770,7 +781,8 @@ function renderGroup(view, modKey, gKey){
     + chipHtml('', '全部', all.length, subFilter === '')
     + g.subs.map(s => chipHtml(s.key, s.label, all.filter(p => p.s === s.key).length, subFilter === s.key)).join('')
     + '</div>'
-    + body;
+    + body
+    + '<div class="bank-note">' + g.label + ' 题库 ' + g.total.toLocaleString() + ' 题</div>';
 }
 
 function chipHtml(key, label, n, on){
@@ -1030,15 +1042,15 @@ function openSheet(id){
 /* 子类选择：带真实题量，并给出该子类的常见细分作为名称推荐 */
 function renderSubPick(g, cur){
   $('subPick').innerHTML = g.subs.map(s =>
-    `<button data-s="${s.key}" class="${cur === s.key ? 'on' : ''}">${s.label}<i>${s.total}</i></button>`
+    `<button data-s="${s.key}" class="${cur === s.key ? 'on' : ''}">${s.label}</button>`
   ).join('');
 
   const sub = g.subs.find(s => s.key === cur);
   const details = (sub && sub.details) ? sub.details : [];
   const hint = details.length
     ? '常见细分：' + details.slice(0, 5).map(d => d.name).join('、')
-    : (sub && sub.merged ? `含 ${sub.merged} 个小类，共 ${sub.total} 题` : '');
-  $('subBasis').textContent = sub ? (hint ? `${sub.total} 题 · ${hint}` : `${sub.total} 题`) : '';
+    : (sub && sub.merged ? `含 ${sub.merged} 个小类` : '');
+  $('subBasis').textContent = hint;
   $('inName').placeholder = namePlaceholder(draftMod, sub);
 
   const rec = $('nameHint');
@@ -1264,7 +1276,7 @@ $('toastAct').onclick = () => {
 $('infoBtn').onclick = () => {
   openDialog({
     title: '使用说明',
-    text: '① 五个模块固定；<b>言语理解、判断推理、资料分析</b>的题型与子类取自你的题库，共 14 个题型、78 个子类、18,011 题。<br>' +
+    text: '① 六个模块固定；<b>言语理解、判断推理、资料分析</b>的题型与子类取自你的题库，共 14 个题型、78 个子类、18,011 题。<br>' +
           '② 子类后面跟着的是该子类的真实题量，题量大的更值得先补。<br>' +
           '③ 新增时先选子类，名称可以从「常见细分」里点选。<br>' +
           '④ 清单左侧圆圈<b>勾选一次＝记一次错</b>，误触可在提示条里撤销。<br>' +

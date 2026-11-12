@@ -3,7 +3,8 @@ package com.gongkao.cuotiben.model
 import androidx.compose.ui.graphics.Color
 
 /**
- * 五大考试模块，顺序与主界面展示顺序一致，属于固定入口。
+ * 六大考试模块，顺序与主界面展示顺序一致，属于固定入口。
+ * 有题库的三个模块（言语/判断/资料）会进到题型页，其余三个走普通清单。
  */
 enum class StudyModule(
     val key: String,
@@ -36,6 +37,14 @@ enum class StudyModule(
         subtitle = "逻辑填空 · 片段阅读 · 排序",
         mainColor = Color(0xFF1F7A6B),
         softColor = Color(0xFFE6F4F0)
+    ),
+    QUANTITY(
+        key = "sl",
+        label = "数量关系",
+        short = "数",
+        subtitle = "行程 · 工程 · 排列组合 · 几何",
+        mainColor = Color(0xFF7B4FBF),
+        softColor = Color(0xFFF0EAFB)
     ),
     JUDGEMENT(
         key = "pd",
