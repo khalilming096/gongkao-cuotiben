@@ -31,7 +31,8 @@ userscripts/
 
 # ---- 个人数据：不进远端仓库 ----
 # 粉笔采集的作答记录、错题备份、同步报告，全部属于个人做题数据
-data/
+# 注意必须写 /data/（锚定仓库根），否则会把安卓的 data 包也一起忽略
+/data/
 # 安卓首启内置的那份错题数据（由 tools/sync_fenbi.py 生成）
 android/app/src/main/assets/seed-backup.json
 # 数据库 / 本地备份文件
