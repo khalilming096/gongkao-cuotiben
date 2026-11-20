@@ -11,7 +11,6 @@
 | `tools/gen_catalog.py` | 从题库 `source` 路径重新生成分类表 |
 | `tools/inject_catalog.py` | 把 `catalog.json` 注入 `index.html` |
 | `tools/sync_fenbi.py` | 把粉笔采集的作答记录转成可导入的错题备份 |
-| `公考错题本-v3.1.0.apk` | 安卓安装包（v3.1），分类与网页版同源，都读 `catalog.json`；首启内置一份错题数据 |
 
 > 安卓端已同步题库分类：`catalog.json` 打包在 `assets` 里，App 启动时读取；首启还会把 `assets/seed-backup.json` 里的错题导进 Room。
 > **备份导出/导入目前只有网页版有**，安卓端待补。
