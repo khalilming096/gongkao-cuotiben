@@ -70,9 +70,3 @@ enum class StudyModule(
         fun byKey(key: String): StudyModule? = values().firstOrNull { it.key == key }
     }
 }
-
-/** 新增知识点时的常用错因，点一下即可填入 */
-val QUICK_REASONS = listOf(
-    "公式混淆", "计算失误", "审题不清", "概念混淆",
-    "时间不够", "选项陷阱", "知识点遗忘", "方法用错"
-)
