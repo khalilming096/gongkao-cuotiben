@@ -99,22 +99,21 @@ python -m http.server 8080 --bind 0.0.0.0
 | --- | --- | --- |
 | JDK | 17 | 编译 Kotlin |
 | Android SDK | platform 34 + build-tools 34.0.0 | 编译目标 |
-| Gradle | 8.7 | 仓库带 wrapper，但本机 `C:\avb` 有现成缓存 |
+| Gradle | 8.7 | 仓库自带 wrapper（`gradlew.bat`），首次编译下载到 `%GRADLE_USER_HOME%` |
 | 网络 | 首次编译需拉依赖 | 之后可离线 |
 
-本机已有便携工具链在 `C:\avb`（jdk / sdk / gradle / gradle-home），无需另装。
+编译环境已装在系统里，靠环境变量指认：`JAVA_HOME`（JDK 17）、`ANDROID_HOME` / `ANDROID_SDK_ROOT`（SDK 根）、`GRADLE_USER_HOME`（依赖缓存）。无需在项目里另放一份工具链。
 
 ### 构建
 
-**方式一：双击 `android\rebuild.bat`**（已封装环境变量，路径写死在脚本里）
+**方式一：双击 `android\rebuild.bat`**（读取上述环境变量，本机已设好）
 
 **方式二：命令行**
 
 ```bash
-export JAVA_HOME="C:/avb/jdk"
-export ANDROID_HOME="C:/avb/sdk"
-export GRADLE_USER_HOME="C:/avb/gradle-home"
-cd android && "C:/avb/gradle/bin/gradle" assembleDebug
+cd android
+./gradlew assembleDebug          # Git Bash / macOS / Linux
+gradlew.bat assembleDebug        # Windows cmd
 ```
 
 **方式三：Android Studio** → Open → 选 `android` 目录 → Sync → Run
@@ -126,13 +125,13 @@ cd android && "C:/avb/gradle/bin/gradle" assembleDebug
 | 文件 | 配置项 | 什么时候改 |
 | --- | --- | --- |
 | `android/local.properties` | `sdk.dir` | 换电脑或 SDK 路径变了 |
-| `android/rebuild.bat` | `JAVA_HOME` / `ANDROID_HOME` / `GRADLE_BIN` | 不用 `C:\avb` 那天 |
+| `android/rebuild.bat` | 顶部三个环境变量的检查 | 新机器没设环境变量时 |
 | `android/gradle.properties` | `android.overridePathCheck=true` | 工程不在中文路径下时可删 |
 | `android/app/build.gradle.kts` | `versionCode` / `versionName` | 每次发版递增 |
 
 ### 验证部署成功
 
-1. 安装后首次打开 → 主界面 6 个模块，言语理解显示「题库 6762 题 · 3 个题型」
+1. 安装后首次打开 → 主界面 6 个模块，言语理解卡片显示「3 个题型」；题库总量在页脚淡字里
 2. 进「言语理解」→ 必须是 **3 个题型**（片段阅读 / 逻辑填空 / 语句表达）。如果只看到 2 个，说明 `assets/catalog.json` 没打进包
 3. 从旧版升级的：原知识点应落在对应题型下；对不上题库分类的会出现在题型列表底部的「未归类」卡片里
 4. 新增知识点 → 子类带题量、错因是该题型专属的

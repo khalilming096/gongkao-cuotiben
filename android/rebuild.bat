@@ -4,25 +4,31 @@ setlocal
 REM ============================================================
 REM  CuotiBen - rebuild debug APK
 REM  Double click this file to compile.
+REM  Environment variables are already set on this machine:
+REM    JAVA_HOME        JDK 17
+REM    ANDROID_HOME     Android SDK root
+REM    GRADLE_USER_HOME Gradle dependency cache
 REM  Output: app\build\outputs\apk\debug\app-debug.apk
 REM ============================================================
 
-set "JAVA_HOME=C:\avb\jdk"
-set "ANDROID_HOME=C:\avb\sdk"
-set "GRADLE_USER_HOME=C:\avb\gradle-home"
-set "GRADLE_BIN=C:\avb\gradle\bin\gradle.bat"
-
 cd /d "%~dp0"
 
+if "%JAVA_HOME%"=="" echo [ERROR] JAVA_HOME is not set. & goto end
+if "%ANDROID_HOME%"=="" echo [ERROR] ANDROID_HOME is not set. & goto end
 if not exist "%JAVA_HOME%\bin\java.exe" goto nojdk
-if not exist "%GRADLE_BIN%" goto nogradle
+if not exist "%ANDROID_HOME%\platforms\android-34" goto nosdk
+if not exist "%~dp0gradlew.bat" goto nowrapper
 
 echo.
 echo Building CuotiBen...
-echo First run takes a few minutes, later runs about 40 seconds.
+echo   JAVA_HOME        = %JAVA_HOME%
+echo   ANDROID_HOME     = %ANDROID_HOME%
+echo   GRADLE_USER_HOME = %GRADLE_USER_HOME%
+echo.
+echo First build downloads Gradle 8.7 and dependencies (a few minutes).
 echo.
 
-call "%GRADLE_BIN%" assembleDebug --console=plain
+call "%~dp0gradlew.bat" assembleDebug --console=plain
 if errorlevel 1 goto failed
 
 echo.
@@ -33,14 +39,15 @@ echo ============================================================
 goto end
 
 :nojdk
-echo.
 echo [ERROR] JDK not found at %JAVA_HOME%
-echo         Portable toolchain missing. Build with Android Studio instead.
 goto end
 
-:nogradle
-echo.
-echo [ERROR] Gradle not found at %GRADLE_BIN%
+:nosdk
+echo [ERROR] Android platform 34 not found at %ANDROID_HOME%
+goto end
+
+:nowrapper
+echo [ERROR] gradlew.bat not found next to this script.
 goto end
 
 :failed
